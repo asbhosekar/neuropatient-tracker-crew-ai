@@ -6,6 +6,7 @@ Sets up RoundRobinGroupChat for collaborative agent interactions.
 """
 import asyncio
 import os
+import time
 from typing import Optional
 
 from autogen_agentchat.agents import AssistantAgent
@@ -23,6 +24,7 @@ from src.agents import (
     TreatmentAdvisorAgent,
 )
 from src.config import settings
+from src.logging import get_logger, AuditEventType
 
 
 def get_model_client() -> OpenAIChatCompletionClient:
@@ -44,6 +46,7 @@ class NeuroCrew:
     
     def __init__(self):
         """Initialize the NeuroCrew orchestrator."""
+        self.logger = get_logger()
         self.model_client = get_model_client()
         
         # Create agents with model client
@@ -55,6 +58,11 @@ class NeuroCrew:
         self._clinical_architect = self._create_agent("ClinicalArchitect", ClinicalArchitectAgent().system_message)
         
         self._team: Optional[RoundRobinGroupChat] = None
+        
+        # Log agent initialization
+        for agent_name in ["Neurologist", "PrognosisAnalyst", "TreatmentAdvisor", 
+                          "ReportGenerator", "QAValidator", "ClinicalArchitect"]:
+            self.logger.log_agent_initialized(agent_name)
     
     def _create_agent(self, name: str, system_message: str) -> AssistantAgent:
         """Create an AssistantAgent with the model client."""
@@ -75,6 +83,10 @@ class NeuroCrew:
             self._clinical_architect,
         ]
     
+    def get_agent_names(self) -> list[str]:
+        """Get names of all agents."""
+        return [a.name for a in self.get_agents()]
+    
     def setup_team(self, max_messages: int = 12) -> RoundRobinGroupChat:
         """
         Set up the multi-agent team.
@@ -94,17 +106,63 @@ class NeuroCrew:
         
         return self._team
     
-    async def run_conversation(self, task: str) -> None:
+    async def run_conversation(self, task: str, patient_id: Optional[str] = None) -> None:
         """
         Run a multi-agent conversation.
         
         Args:
             task: The initial task or query
+            patient_id: Optional patient ID for audit logging
         """
         if self._team is None:
             self.setup_team()
         
-        await Console(self._team.run_stream(task=task))
+        # Generate correlation ID for this conversation
+        correlation_id = self.logger.new_correlation_id()
+        start_time = time.time()
+        
+        # Log conversation start
+        self.logger.log_conversation_start(
+            correlation_id=correlation_id,
+            task_summary=task[:200],
+            agents_involved=self.get_agent_names(),
+        )
+        
+        # Log PHI access if patient data involved
+        if patient_id:
+            self.logger.log_phi_access(
+                patient_id=patient_id,
+                access_type="read",
+                data_fields=["clinical_summary", "visit_history"],
+                reason="Multi-agent prognosis analysis",
+            )
+        
+        try:
+            await Console(self._team.run_stream(task=task))
+            
+            # Log successful completion
+            duration_ms = (time.time() - start_time) * 1000
+            self.logger.log_conversation_end(
+                correlation_id=correlation_id,
+                duration_ms=duration_ms,
+                message_count=12,  # Approximation based on max_messages
+                termination_reason="completed",
+            )
+            
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            self.logger.log_error(
+                f"Conversation failed: {str(e)}",
+                exception=e,
+                correlation_id=correlation_id,
+            )
+            self.logger.log_conversation_end(
+                correlation_id=correlation_id,
+                duration_ms=duration_ms,
+                message_count=0,
+                termination_reason=f"error: {str(e)}",
+            )
+            raise
     
     async def run_prognosis_analysis(self, patient_data: dict) -> None:
         """
@@ -113,10 +171,20 @@ class NeuroCrew:
         Args:
             patient_data: Patient information dictionary
         """
+        patient_id = patient_data.get('id', 'Unknown')
+        
+        # Log PHI access for prognosis
+        self.logger.log_phi_access(
+            patient_id=patient_id,
+            access_type="read",
+            data_fields=["condition", "visit_history", "medications", "assessments"],
+            reason="Prognosis analysis request",
+        )
+        
         task = f"""
 Perform a comprehensive prognosis analysis for this patient:
 
-Patient ID: {patient_data.get('id', 'Unknown')}
+Patient ID: {patient_id}
 Condition: {patient_data.get('condition', 'Unknown')}
 Recent Visits: {patient_data.get('visit_count', 0)}
 
@@ -132,7 +200,15 @@ Each specialist should contribute:
 
 Collaborate to provide a comprehensive assessment. End with TERMINATE when complete.
 """
-        await self.run_conversation(task)
+        await self.run_conversation(task, patient_id=patient_id)
+        
+        # Log prognosis generation
+        self.logger.log_prognosis_generated(
+            patient_id=patient_id,
+            correlation_id=self.logger.new_correlation_id(),
+            trend="analysis_completed",
+            confidence=0.0,  # Will be populated by actual analysis
+        )
     
     async def consult(self, question: str) -> None:
         """

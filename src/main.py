@@ -6,9 +6,21 @@ Run the multi-agent neurology patient tracking system.
 import asyncio
 import sys
 import os
+import atexit
 
 from src.orchestrator import NeuroCrew, SingleAgentChat, run_async
 from src.config import settings
+from src.logging import init_logging, get_logger
+
+
+# Initialize logging at module load
+_logger = None
+
+
+def _shutdown_logging():
+    """Clean shutdown of logging system."""
+    if _logger:
+        _logger.log_system_stop()
 
 
 async def run_demo():
@@ -111,10 +123,17 @@ Should we adjust the treatment?
 
 def main():
     """Main entry point."""
+    global _logger
+    
+    # Initialize logging system
+    _logger = init_logging()
+    atexit.register(_shutdown_logging)
+    
     # Check for API key (from .env or global environment)
     api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
     
     if not api_key or api_key == "your-openai-api-key-here":
+        _logger.log_error("OPENAI_API_KEY not configured")
         print("\n❌ Error: OPENAI_API_KEY not configured!")
         print("   Please set your API key:")
         print("   - In .env file, OR")
@@ -149,6 +168,9 @@ def main():
             
     except KeyboardInterrupt:
         print("\n\n👋 Goodbye!")
+    except Exception as e:
+        _logger.log_error(f"Application error: {str(e)}", exception=e)
+        raise
 
 
 if __name__ == "__main__":
