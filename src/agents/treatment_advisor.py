@@ -4,7 +4,7 @@ Neuro Patient Tracker - Treatment Advisor Agent
 Responsible for suggesting treatment adjustments based on patient
 trends, medication efficacy, and clinical guidelines.
 """
-import autogen
+from autogen_agentchat.agents import AssistantAgent
 from typing import Optional
 from .base_agent import BaseAgent
 
@@ -87,12 +87,11 @@ class TreatmentAdvisorAgent(BaseAgent):
             llm_config=llm_config,
         )
     
-    def create_agent(self) -> autogen.AssistantAgent:
+    def create_agent(self) -> AssistantAgent:
         """Create the AutoGen AssistantAgent instance."""
-        return autogen.AssistantAgent(
+        return AssistantAgent(
             name=self.name,
-            system_message=self.system_message,
-            llm_config=self.llm_config,
+            description=self.system_message,
         )
     
     def get_first_line_treatments(self, condition: str) -> dict:

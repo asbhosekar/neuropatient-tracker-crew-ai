@@ -4,7 +4,7 @@ Neuro Patient Tracker - Report Generator Agent
 Responsible for creating clinical prognosis reports, visit summaries,
 and patient documentation for neurologists.
 """
-import autogen
+from autogen_agentchat.agents import AssistantAgent
 from typing import Optional
 from datetime import datetime
 from .base_agent import BaseAgent
@@ -76,12 +76,11 @@ class ReportGeneratorAgent(BaseAgent):
             llm_config=llm_config,
         )
     
-    def create_agent(self) -> autogen.AssistantAgent:
+    def create_agent(self) -> AssistantAgent:
         """Create the AutoGen AssistantAgent instance."""
-        return autogen.AssistantAgent(
+        return AssistantAgent(
             name=self.name,
-            system_message=self.system_message,
-            llm_config=self.llm_config,
+            description=self.system_message,
         )
     
     def get_report_template(self, report_type: str) -> dict:

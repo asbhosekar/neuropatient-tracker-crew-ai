@@ -5,7 +5,7 @@ Abstract base class for all AutoGen agents in the system.
 """
 from abc import ABC, abstractmethod
 from typing import Any, Optional
-import autogen
+from autogen_agentchat.agents import AssistantAgent
 
 
 class BaseAgent(ABC):
@@ -32,7 +32,7 @@ class BaseAgent(ABC):
         self.name = name
         self.system_message = system_message
         self.llm_config = llm_config or self._default_llm_config()
-        self._agent: Optional[autogen.AssistantAgent] = None
+        self._agent: Optional[AssistantAgent] = None
     
     def _default_llm_config(self) -> dict:
         """Return default LLM configuration."""
@@ -48,7 +48,7 @@ class BaseAgent(ABC):
         }
     
     @abstractmethod
-    def create_agent(self) -> autogen.AssistantAgent:
+    def create_agent(self) -> AssistantAgent:
         """
         Create and return the AutoGen agent instance.
         
@@ -57,7 +57,7 @@ class BaseAgent(ABC):
         pass
     
     @property
-    def agent(self) -> autogen.AssistantAgent:
+    def agent(self) -> AssistantAgent:
         """Get or create the agent instance."""
         if self._agent is None:
             self._agent = self.create_agent()

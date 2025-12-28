@@ -4,7 +4,7 @@ Neuro Patient Tracker - QA Validator Agent
 Responsible for validating medical data accuracy, checking clinical
 logic, and ensuring data quality for neurological patient records.
 """
-import autogen
+from autogen_agentchat.agents import AssistantAgent
 from typing import Optional
 from .base_agent import BaseAgent
 
@@ -78,12 +78,11 @@ class QAValidatorAgent(BaseAgent):
             llm_config=llm_config,
         )
     
-    def create_agent(self) -> autogen.AssistantAgent:
+    def create_agent(self) -> AssistantAgent:
         """Create the AutoGen AssistantAgent instance."""
-        return autogen.AssistantAgent(
+        return AssistantAgent(
             name=self.name,
-            system_message=self.system_message,
-            llm_config=self.llm_config,
+            description=self.system_message,
         )
     
     def validate_assessment_score(self, test_name: str, score: int) -> dict:

@@ -3,51 +3,15 @@ NeuroCrew AI - Main Entry Point
 
 Run the multi-agent neurology patient tracking system.
 """
+import asyncio
 import sys
-from typing import Optional
+import os
 
-from src.orchestrator import NeuroCrew, TwoAgentChat
+from src.orchestrator import NeuroCrew, SingleAgentChat, run_async
 from src.config import settings
 
 
-def run_interactive_session():
-    """Run an interactive multi-agent session."""
-    print("\n" + "=" * 60)
-    print("🧠 NeuroCrew AI - Multi-Agent Clinical Decision Support")
-    print("=" * 60)
-    print("\nInitializing agents...")
-    
-    crew = NeuroCrew()
-    crew.setup_group_chat()
-    
-    print("\n✅ Agents ready:")
-    print("   - Neurologist")
-    print("   - Clinical Architect")
-    print("   - Prognosis Analyst")
-    print("   - Report Generator")
-    print("   - QA Validator")
-    print("   - Treatment Advisor")
-    print("\nType your clinical question or 'exit' to quit.\n")
-    
-    while True:
-        try:
-            user_input = input("\n👤 You: ").strip()
-            
-            if user_input.lower() in ['exit', 'quit', 'q']:
-                print("\n👋 Goodbye!")
-                break
-            
-            if not user_input:
-                continue
-            
-            crew.consult(user_input)
-            
-        except KeyboardInterrupt:
-            print("\n\n👋 Session ended.")
-            break
-
-
-def run_demo():
+async def run_demo():
     """Run a demonstration with sample patient data."""
     print("\n" + "=" * 60)
     print("🧠 NeuroCrew AI - Demo Mode")
@@ -88,17 +52,17 @@ Concerns:
     print("\n" + "-" * 60 + "\n")
     
     crew = NeuroCrew()
-    crew.run_prognosis_analysis(sample_patient)
+    await crew.run_prognosis_analysis(sample_patient)
 
 
-def run_single_agent_demo(agent_type: str = "neurologist"):
+async def run_single_agent_demo(agent_type: str = "neurologist"):
     """
     Run a simple single-agent consultation demo.
     
     Args:
         agent_type: Type of agent to consult (neurologist, prognosis, treatment)
     """
-    chat = TwoAgentChat()
+    chat = SingleAgentChat()
     
     if agent_type == "neurologist":
         question = """
@@ -112,7 +76,7 @@ A 45-year-old female presents with:
 What is your assessment and recommended workup?
 """
         print("\n🩺 Consulting Neurologist Agent...")
-        chat.neurologist_consult(question)
+        await chat.consult_neurologist(question)
     
     elif agent_type == "prognosis":
         summary = """
@@ -129,7 +93,7 @@ MMSE Scores over time:
 Currently on Donepezil 10mg daily.
 """
         print("\n📊 Running Prognosis Analysis...")
-        chat.prognosis_analysis(summary)
+        await chat.consult_prognosis(summary)
     
     elif agent_type == "treatment":
         case = """
@@ -142,13 +106,12 @@ Patient with epilepsy (focal seizures with impaired awareness)
 Should we adjust the treatment?
 """
         print("\n💊 Getting Treatment Recommendations...")
-        chat.treatment_recommendation(case)
+        await chat.consult_treatment(case)
 
 
 def main():
     """Main entry point."""
     # Check for API key (from .env or global environment)
-    import os
     api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
     
     if not api_key or api_key == "your-openai-api-key-here":
@@ -161,31 +124,28 @@ def main():
     print("\n🧠 NeuroCrew AI")
     print("-" * 40)
     print("Select mode:")
-    print("  1. Interactive multi-agent session")
-    print("  2. Demo with sample patient")
-    print("  3. Single agent demo (Neurologist)")
-    print("  4. Single agent demo (Prognosis)")
-    print("  5. Single agent demo (Treatment)")
+    print("  1. Demo with sample patient (multi-agent)")
+    print("  2. Single agent demo (Neurologist)")
+    print("  3. Single agent demo (Prognosis)")
+    print("  4. Single agent demo (Treatment)")
     print("  0. Exit")
     
     try:
-        choice = input("\nEnter choice (1-5, 0 to exit): ").strip()
+        choice = input("\nEnter choice (1-4, 0 to exit): ").strip()
         
         if choice == "1":
-            run_interactive_session()
+            asyncio.run(run_demo())
         elif choice == "2":
-            run_demo()
+            asyncio.run(run_single_agent_demo("neurologist"))
         elif choice == "3":
-            run_single_agent_demo("neurologist")
+            asyncio.run(run_single_agent_demo("prognosis"))
         elif choice == "4":
-            run_single_agent_demo("prognosis")
-        elif choice == "5":
-            run_single_agent_demo("treatment")
+            asyncio.run(run_single_agent_demo("treatment"))
         elif choice == "0":
             print("👋 Goodbye!")
         else:
             print("Invalid choice. Running demo mode...")
-            run_demo()
+            asyncio.run(run_demo())
             
     except KeyboardInterrupt:
         print("\n\n👋 Goodbye!")

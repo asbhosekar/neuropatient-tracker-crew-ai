@@ -4,7 +4,7 @@ Neuro Patient Tracker - Prognosis Analyst Agent
 Responsible for analyzing patient data trends, predicting
 condition trajectories, and generating prognosis insights.
 """
-import autogen
+from autogen_agentchat.agents import AssistantAgent
 from typing import Optional
 from .base_agent import BaseAgent
 
@@ -61,12 +61,11 @@ class PrognosisAnalystAgent(BaseAgent):
             llm_config=llm_config,
         )
     
-    def create_agent(self) -> autogen.AssistantAgent:
+    def create_agent(self) -> AssistantAgent:
         """Create the AutoGen AssistantAgent instance."""
-        return autogen.AssistantAgent(
+        return AssistantAgent(
             name=self.name,
-            system_message=self.system_message,
-            llm_config=self.llm_config,
+            description=self.system_message,
         )
     
     def calculate_trend(self, data_points: list[float]) -> str:

@@ -4,7 +4,7 @@ Neuro Patient Tracker - Neurologist Agent
 The primary clinical expert agent responsible for patient consultations,
 diagnosis guidance, and clinical decision support.
 """
-import autogen
+from autogen_agentchat.agents import AssistantAgent
 from typing import Optional
 from .base_agent import BaseAgent
 
@@ -71,12 +71,11 @@ class NeurologistAgent(BaseAgent):
             llm_config=llm_config,
         )
     
-    def create_agent(self) -> autogen.AssistantAgent:
+    def create_agent(self) -> AssistantAgent:
         """Create the AutoGen AssistantAgent instance."""
-        return autogen.AssistantAgent(
+        return AssistantAgent(
             name=self.name,
-            system_message=self.system_message,
-            llm_config=self.llm_config,
+            description=self.system_message,
         )
     
     def get_red_flags(self, condition: str) -> list[str]:
