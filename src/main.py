@@ -2,6 +2,7 @@
 NeuroCrew AI - Main Entry Point
 
 Run the multi-agent neurology patient tracking system.
+Includes LLM telemetry for cost and performance tracking.
 """
 import asyncio
 import sys
@@ -10,15 +11,33 @@ import atexit
 
 from src.orchestrator import NeuroCrew, SingleAgentChat, run_async
 from src.config import settings
-from src.logging import init_logging, get_logger
+from src.logging import init_logging, get_logger, init_telemetry, get_telemetry
 
 
 # Initialize logging at module load
 _logger = None
+_telemetry = None
 
 
-def _shutdown_logging():
-    """Clean shutdown of logging system."""
+def _shutdown():
+    """Clean shutdown of logging and telemetry systems."""
+    global _telemetry
+    
+    # Print and save session cost report
+    if _telemetry:
+        print("\n" + "=" * 60)
+        print("📊 LLM Session Cost Report")
+        print("=" * 60)
+        report = _telemetry.get_session_report()
+        print(report)
+        
+        # Save session report to file
+        _telemetry.save_session_report()
+        
+        # End session
+        _telemetry.end_session()
+    
+    # Log system stop
     if _logger:
         _logger.log_system_stop()
 
@@ -123,11 +142,17 @@ Should we adjust the treatment?
 
 def main():
     """Main entry point."""
-    global _logger
+    global _logger, _telemetry
     
     # Initialize logging system
     _logger = init_logging()
-    atexit.register(_shutdown_logging)
+    
+    # Initialize telemetry for LLM cost tracking
+    _telemetry = init_telemetry()
+    _telemetry.start_session()
+    
+    # Register cleanup on exit
+    atexit.register(_shutdown)
     
     # Check for API key (from .env or global environment)
     api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
@@ -142,15 +167,18 @@ def main():
     
     print("\n🧠 NeuroCrew AI")
     print("-" * 40)
+    print(f"📊 Telemetry: Session {_telemetry.session_id[:8]}... started")
+    print("-" * 40)
     print("Select mode:")
     print("  1. Demo with sample patient (multi-agent)")
     print("  2. Single agent demo (Neurologist)")
     print("  3. Single agent demo (Prognosis)")
     print("  4. Single agent demo (Treatment)")
+    print("  5. Show cost summary")
     print("  0. Exit")
     
     try:
-        choice = input("\nEnter choice (1-4, 0 to exit): ").strip()
+        choice = input("\nEnter choice (1-5, 0 to exit): ").strip()
         
         if choice == "1":
             asyncio.run(run_demo())
@@ -160,6 +188,8 @@ def main():
             asyncio.run(run_single_agent_demo("prognosis"))
         elif choice == "4":
             asyncio.run(run_single_agent_demo("treatment"))
+        elif choice == "5":
+            print("\n" + _telemetry.get_session_report())
         elif choice == "0":
             print("👋 Goodbye!")
         else:

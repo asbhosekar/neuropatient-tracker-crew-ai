@@ -3,6 +3,7 @@ NeuroCrew AI - Agent Orchestrator
 
 Core AutoGen multi-agent conversation orchestration using AutoGen 0.4+ API.
 Sets up RoundRobinGroupChat for collaborative agent interactions.
+Includes LLM telemetry for cost and performance tracking.
 """
 import asyncio
 import os
@@ -24,7 +25,7 @@ from src.agents import (
     TreatmentAdvisorAgent,
 )
 from src.config import settings
-from src.logging import get_logger, AuditEventType
+from src.logging import get_logger, AuditEventType, get_telemetry
 
 
 def get_model_client() -> OpenAIChatCompletionClient:
@@ -47,6 +48,7 @@ class NeuroCrew:
     def __init__(self):
         """Initialize the NeuroCrew orchestrator."""
         self.logger = get_logger()
+        self.telemetry = get_telemetry()
         self.model_client = get_model_client()
         
         # Create agents with model client
