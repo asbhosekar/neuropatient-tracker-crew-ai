@@ -1,0 +1,195 @@
+"""
+NeuroCrew AI - Main Entry Point
+
+Run the multi-agent neurology patient tracking system.
+"""
+import sys
+from typing import Optional
+
+from src.orchestrator import NeuroCrew, TwoAgentChat
+from src.config import settings
+
+
+def run_interactive_session():
+    """Run an interactive multi-agent session."""
+    print("\n" + "=" * 60)
+    print("🧠 NeuroCrew AI - Multi-Agent Clinical Decision Support")
+    print("=" * 60)
+    print("\nInitializing agents...")
+    
+    crew = NeuroCrew()
+    crew.setup_group_chat()
+    
+    print("\n✅ Agents ready:")
+    print("   - Neurologist")
+    print("   - Clinical Architect")
+    print("   - Prognosis Analyst")
+    print("   - Report Generator")
+    print("   - QA Validator")
+    print("   - Treatment Advisor")
+    print("\nType your clinical question or 'exit' to quit.\n")
+    
+    while True:
+        try:
+            user_input = input("\n👤 You: ").strip()
+            
+            if user_input.lower() in ['exit', 'quit', 'q']:
+                print("\n👋 Goodbye!")
+                break
+            
+            if not user_input:
+                continue
+            
+            crew.consult(user_input)
+            
+        except KeyboardInterrupt:
+            print("\n\n👋 Session ended.")
+            break
+
+
+def run_demo():
+    """Run a demonstration with sample patient data."""
+    print("\n" + "=" * 60)
+    print("🧠 NeuroCrew AI - Demo Mode")
+    print("=" * 60)
+    
+    # Sample patient for demonstration
+    sample_patient = {
+        "id": "PT-2024-001",
+        "condition": "Parkinson's Disease",
+        "visit_count": 6,
+        "clinical_summary": """
+Patient: 68-year-old male
+Diagnosis: Parkinson's Disease (diagnosed 3 years ago)
+
+Recent Visit History:
+- Visit 1 (6 months ago): UPDRS Motor Score: 28, Stable tremor
+- Visit 2 (5 months ago): UPDRS Motor Score: 30, Mild bradykinesia increase
+- Visit 3 (4 months ago): UPDRS Motor Score: 32, Started Pramipexole
+- Visit 4 (3 months ago): UPDRS Motor Score: 29, Improved with medication
+- Visit 5 (2 months ago): UPDRS Motor Score: 31, Some wearing-off noted
+- Visit 6 (current): UPDRS Motor Score: 34, Increased OFF time (~3 hrs/day)
+
+Current Medications:
+- Carbidopa/Levodopa 25/100mg TID
+- Pramipexole 0.5mg TID
+
+Concerns:
+- Motor fluctuations increasing
+- Reports ~3 hours of OFF time daily
+- Sleep disturbances
+- Mild cognitive complaints (MoCA: 24/30)
+"""
+    }
+    
+    print("\n📋 Running prognosis analysis for sample patient...")
+    print(f"   Patient ID: {sample_patient['id']}")
+    print(f"   Condition: {sample_patient['condition']}")
+    print("\n" + "-" * 60 + "\n")
+    
+    crew = NeuroCrew()
+    crew.run_prognosis_analysis(sample_patient)
+
+
+def run_single_agent_demo(agent_type: str = "neurologist"):
+    """
+    Run a simple single-agent consultation demo.
+    
+    Args:
+        agent_type: Type of agent to consult (neurologist, prognosis, treatment)
+    """
+    chat = TwoAgentChat()
+    
+    if agent_type == "neurologist":
+        question = """
+A 45-year-old female presents with:
+- Recurrent headaches, 4-5 per week for past 2 months
+- Throbbing, unilateral, moderate-severe intensity
+- Associated nausea and photophobia
+- Duration: 4-12 hours
+- Some relief with OTC ibuprofen but incomplete
+
+What is your assessment and recommended workup?
+"""
+        print("\n🩺 Consulting Neurologist Agent...")
+        chat.neurologist_consult(question)
+    
+    elif agent_type == "prognosis":
+        summary = """
+Patient: 72-year-old male with Alzheimer's Disease
+Duration: Diagnosed 2 years ago
+
+MMSE Scores over time:
+- 24 months ago: 24/30
+- 18 months ago: 22/30
+- 12 months ago: 21/30
+- 6 months ago: 19/30
+- Current: 17/30
+
+Currently on Donepezil 10mg daily.
+"""
+        print("\n📊 Running Prognosis Analysis...")
+        chat.prognosis_analysis(summary)
+    
+    elif agent_type == "treatment":
+        case = """
+Patient with epilepsy (focal seizures with impaired awareness)
+- Current: Levetiracetam 1000mg BID
+- Seizure frequency: 2-3 per month (previously 4-5/month before medication)
+- Side effects: Mild irritability, otherwise tolerating well
+- Goal: Better seizure control
+
+Should we adjust the treatment?
+"""
+        print("\n💊 Getting Treatment Recommendations...")
+        chat.treatment_recommendation(case)
+
+
+def main():
+    """Main entry point."""
+    # Check for API key (from .env or global environment)
+    import os
+    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+    
+    if not api_key or api_key == "your-openai-api-key-here":
+        print("\n❌ Error: OPENAI_API_KEY not configured!")
+        print("   Please set your API key:")
+        print("   - In .env file, OR")
+        print("   - As global environment variable")
+        sys.exit(1)
+    
+    print("\n🧠 NeuroCrew AI")
+    print("-" * 40)
+    print("Select mode:")
+    print("  1. Interactive multi-agent session")
+    print("  2. Demo with sample patient")
+    print("  3. Single agent demo (Neurologist)")
+    print("  4. Single agent demo (Prognosis)")
+    print("  5. Single agent demo (Treatment)")
+    print("  0. Exit")
+    
+    try:
+        choice = input("\nEnter choice (1-5, 0 to exit): ").strip()
+        
+        if choice == "1":
+            run_interactive_session()
+        elif choice == "2":
+            run_demo()
+        elif choice == "3":
+            run_single_agent_demo("neurologist")
+        elif choice == "4":
+            run_single_agent_demo("prognosis")
+        elif choice == "5":
+            run_single_agent_demo("treatment")
+        elif choice == "0":
+            print("👋 Goodbye!")
+        else:
+            print("Invalid choice. Running demo mode...")
+            run_demo()
+            
+    except KeyboardInterrupt:
+        print("\n\n👋 Goodbye!")
+
+
+if __name__ == "__main__":
+    main()
