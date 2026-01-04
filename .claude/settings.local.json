@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if not exist tests mkdir tests)",
+      "Bash(exit 0)",
+      "Bash(python -m pip install:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(dir:*)",
+      "Bash(python:*)",
+      "Bash(copy .env.example .env)",
+      "Bash(curl:*)",
+      "Bash(streamlit run:*)"
+    ]
+  }
+}

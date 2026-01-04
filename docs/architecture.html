@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro Patient Tracker - Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        .architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .layer {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .layer:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .layer-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .layer-icon {
+            font-size: 1.3em;
+        }
+
+        .components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .component {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .component:hover {
+            border-color: #3498db;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+        }
+
+        .component-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .component-desc {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .flow-diagram {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .flow-item {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 10px;
+            display: inline-block;
+            border: 2px solid #3498db;
+            position: relative;
+        }
+
+        .flow-item::after {
+            content: '↓';
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #3498db;
+        }
+
+        .flow-item:last-child::after {
+            content: '';
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tech-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .legend {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            color: #856404;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box-title {
+            font-weight: bold;
+            color: #0c5460;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .info-box-content {
+            color: #0c5460;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .components {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .agent-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 5px solid #e74c3c;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .agent-card:nth-child(1) { border-left-color: #e74c3c; }
+        .agent-card:nth-child(2) { border-left-color: #3498db; }
+        .agent-card:nth-child(3) { border-left-color: #2ecc71; }
+        .agent-card:nth-child(4) { border-left-color: #f39c12; }
+        .agent-card:nth-child(5) { border-left-color: #9b59b6; }
+        .agent-card:nth-child(6) { border-left-color: #1abc9c; }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .agent-role {
+            color: #7f8c8d;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Neuro Patient Tracker</h1>
+        <p class="subtitle">Multi-Agent AI System Architecture</p>
+
+        <!-- Overview -->
+        <div class="info-box">
+            <div class="info-box-title">📋 System Overview</div>
+            <div class="info-box-content">
+                The Neuro Patient Tracker is an AI-powered system that uses multiple specialized agents
+                to provide comprehensive neurological patient analysis, prognosis prediction, and treatment
+                recommendations. The system supports both cloud-based (OpenAI) and local (Llama 3.2) LLMs.
+            </div>
+        </div>
+
+        <!-- Data Flow -->
+        <div class="flow-diagram">
+            <h2 style="margin-bottom: 30px; color: #2c3e50;">📊 Data Flow</h2>
+            <div>
+                <div class="flow-item">👤 User Interface<br><small>(Streamlit / CLI)</small></div>
+                <div class="flow-item">🎯 Orchestrator<br><small>(NeuroCrew)</small></div>
+                <div class="flow-item">🤖 AI Agents<br><small>(6 Specialists)</small></div>
+                <div class="flow-item">🧠 LLM<br><small>(OpenAI / Local Llama)</small></div>
+                <div class="flow-item">📝 Response<br><small>(Analysis & Reports)</small></div>
+            </div>
+        </div>
+
+        <!-- Architecture Layers -->
+        <div class="architecture">
+
+            <!-- Layer 1: Presentation -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="layer-icon">🖥️</span>
+                    Layer 1: Presentation Layer
+                </div>
+                <div class="components">
+                    <div class="component">
+                        <div class="component-title">Streamlit Web UI</div>
+                        <div class="component-desc">
+                            Interactive web interface with patient analysis, single agent consultation,
+                            and system information pages. Real-time agent output display.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">CLI Interface</div>
+                        <div class="component-desc">
+                            Command-line interface for running demos, single agent consultations,
+                            and batch processing. Ideal for automation and scripting.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer 2: Orchestration -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="layer-icon">🎭</span>
+                    Layer 2: Orchestration Layer
+                </div>
+                <div class="components">
+                    <div class="component">
+                        <div class="component-title">NeuroCrew Orchestrator</div>
+                        <div class="component-desc">
+                            Manages multi-agent conversations using AutoGen's RoundRobinGroupChat.
+                            Coordinates agent interactions and manages conversation flow.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">SingleAgentChat</div>
+                        <div class="component-desc">
+                            Handles direct consultations with individual agents for specific queries.
+                            Faster for single-purpose tasks.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">Model Client Factory</div>
+                        <div class="component-desc">
+                            Creates appropriate LLM clients based on configuration.
+                            Supports both OpenAI API and local LLM endpoints.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer 3: AI Agents -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="layer-icon">🤖</span>
+                    Layer 3: AI Agent Layer
+                </div>
+                <div class="agent-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">👨‍⚕️ Neurologist</div>
+                        <div class="agent-role">
+                            Reviews clinical cases, provides medical assessments,
+                            and identifies key neurological findings.
+                        </div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">📊 Prognosis Analyst</div>
+                        <div class="agent-role">
+                            Analyzes patient trends, predicts disease trajectories,
+                            and provides longitudinal assessments.
+                        </div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">💊 Treatment Advisor</div>
+                        <div class="agent-role">
+                            Recommends medication adjustments and treatment plans
+                            based on current evidence and patient history.
+                        </div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">📄 Report Generator</div>
+                        <div class="agent-role">
+                            Creates comprehensive clinical summaries and prognosis
+                            reports from multi-agent analyses.
+                        </div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">✅ QA Validator</div>
+                        <div class="agent-role">
+                            Validates data accuracy, checks medical logic,
+                            and ensures quality of recommendations.
+                        </div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">🏗️ Clinical Architect</div>
+                        <div class="agent-role">
+                            Designs data models, ensures HIPAA compliance,
+                            and maintains system architecture.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer 4: LLM Integration -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="layer-icon">🧠</span>
+                    Layer 4: LLM Integration Layer
+                </div>
+                <div class="components">
+                    <div class="component">
+                        <div class="component-title">OpenAI API Client</div>
+                        <div class="component-desc">
+                            Cloud-based GPT-4o-mini integration for high-quality responses
+                            with large context windows (128K tokens).
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">Local LLM Client</div>
+                        <div class="component-desc">
+                            Connects to local Llama 3.2 via OpenAI-compatible API.
+                            Supports LM Studio, Ollama, and llama.cpp.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">AutoGen Framework</div>
+                        <div class="component-desc">
+                            Microsoft's multi-agent conversation framework.
+                            Handles agent coordination and message routing.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer 5: Data & Models -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="layer-icon">💾</span>
+                    Layer 5: Data & Models Layer
+                </div>
+                <div class="components">
+                    <div class="component">
+                        <div class="component-title">Pydantic Models</div>
+                        <div class="component-desc">
+                            Type-safe data models for Patient, Visit, Medication,
+                            and Prognosis with built-in validation.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">SQLAlchemy ORM</div>
+                        <div class="component-desc">
+                            Database abstraction layer for patient records,
+                            visit history, and clinical data storage.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">SQLite Database</div>
+                        <div class="component-desc">
+                            Lightweight embedded database for local data storage.
+                            Can be swapped for PostgreSQL in production.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer 6: Infrastructure -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="layer-icon">⚙️</span>
+                    Layer 6: Infrastructure Layer
+                </div>
+                <div class="components">
+                    <div class="component">
+                        <div class="component-title">HIPAA Audit Logger</div>
+                        <div class="component-desc">
+                            Comprehensive audit logging for PHI access, agent actions,
+                            and system events. Ensures compliance and traceability.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">LLM Telemetry</div>
+                        <div class="component-desc">
+                            Tracks LLM usage, costs, token counts, and performance metrics.
+                            Generates session cost reports.
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="component-title">Configuration System</div>
+                        <div class="component-desc">
+                            Environment-based configuration using .env files.
+                            Supports multiple LLM providers and deployment environments.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tech Stack -->
+        <div style="margin-top: 40px;">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">🔧 Technology Stack</h2>
+            <div class="tech-stack">
+                <div class="tech-item">Python 3.10+</div>
+                <div class="tech-item">AutoGen 0.4+</div>
+                <div class="tech-item">Streamlit</div>
+                <div class="tech-item">FastAPI</div>
+                <div class="tech-item">Pydantic v2</div>
+                <div class="tech-item">SQLAlchemy</div>
+                <div class="tech-item">OpenAI API</div>
+                <div class="tech-item">Llama 3.2</div>
+                <div class="tech-item">SQLite</div>
+                <div class="tech-item">pytest</div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-title">📖 Legend</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>Core System Component</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>AI Agent / Intelligence</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2ecc71;"></div>
+                <span>Data Storage / Persistence</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>External Service / API</span>
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="info-box" style="background: #d4edda; border-color: #28a745; margin-top: 30px;">
+            <div class="info-box-title" style="color: #155724;">✨ Key Features</div>
+            <div class="info-box-content" style="color: #155724;">
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li><strong>Multi-Agent Collaboration:</strong> 6 specialized AI agents work together</li>
+                    <li><strong>Dual LLM Support:</strong> Switch between OpenAI and local Llama 3.2</li>
+                    <li><strong>HIPAA Compliance:</strong> Comprehensive audit logging and data security</li>
+                    <li><strong>Interactive UI:</strong> Modern Streamlit web interface</li>
+                    <li><strong>Cost Tracking:</strong> Real-time LLM usage and cost monitoring</li>
+                    <li><strong>Extensible:</strong> Easy to add new agents or integrate additional services</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Add click handlers for interactive elements
+        document.querySelectorAll('.component, .agent-card').forEach(item => {
+            item.addEventListener('click', function() {
+                const title = this.querySelector('.component-title, .agent-name').textContent;
+                const desc = this.querySelector('.component-desc, .agent-role').textContent;
+
+                // Create a simple modal effect
+                this.style.backgroundColor = '#e3f2fd';
+                setTimeout(() => {
+                    this.style.backgroundColor = '';
+                }, 300);
+            });
+        });
+
+        // Add hover effects
+        document.querySelectorAll('.tech-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1) rotate(2deg)';
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1) rotate(0deg)';
+            });
+        });
+    </script>
+</body>
+</html>

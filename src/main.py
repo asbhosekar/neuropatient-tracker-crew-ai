@@ -149,16 +149,23 @@ def main():
     # Register cleanup on exit
     atexit.register(_shutdown)
     
-    # Check for API key (from .env or global environment)
-    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
-    
-    if not api_key or api_key == "your-openai-api-key-here":
-        _logger.log_error("OPENAI_API_KEY not configured")
-        print("\n❌ Error: OPENAI_API_KEY not configured!")
-        print("   Please set your API key:")
-        print("   - In .env file, OR")
-        print("   - As global environment variable")
-        sys.exit(1)
+    # Check LLM configuration based on provider
+    if settings.LLM_PROVIDER == "openai":
+        api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+        if not api_key or api_key == "your_openai_api_key_here":
+            _logger.log_error("OPENAI_API_KEY not configured")
+            print("\n❌ Error: OPENAI_API_KEY not configured!")
+            print("   Please set your API key:")
+            print("   - In .env file, OR")
+            print("   - As global environment variable")
+            sys.exit(1)
+    elif settings.LLM_PROVIDER == "local":
+        print(f"\n🖥️  Using Local LLM: {settings.LOCAL_LLM_MODEL}")
+        print(f"📡 Endpoint: {settings.LOCAL_LLM_BASE_URL}")
+        print("   Make sure your local LLM server is running!")
+    else:
+        print(f"\n⚠️  Warning: Unknown LLM_PROVIDER: {settings.LLM_PROVIDER}")
+        print("   Defaulting to local LLM...")
     
     print("\n🧠 NeuroCrew AI")
     print("-" * 40)

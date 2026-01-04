@@ -15,6 +15,7 @@ from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermi
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_agentchat.ui import Console
 from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_ext.models.openai._openai_client import ModelInfo
 
 from src.agents import (
     NeurologistAgent,
@@ -29,12 +30,42 @@ from src.logging import get_logger, AuditEventType, get_telemetry
 
 
 def get_model_client() -> OpenAIChatCompletionClient:
-    """Create OpenAI model client."""
-    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
-    return OpenAIChatCompletionClient(
-        model=settings.OPENAI_MODEL,
-        api_key=api_key,
-    )
+    """
+    Create model client based on LLM_PROVIDER setting.
+
+    Supports both OpenAI and local LLM (via OpenAI-compatible API).
+    """
+    if settings.LLM_PROVIDER == "local":
+        # Use local LLM with OpenAI-compatible endpoint
+        print(f"🖥️  Using local LLM: {settings.LOCAL_LLM_MODEL}")
+        print(f"📡 Endpoint: {settings.LOCAL_LLM_BASE_URL}")
+
+        # Define model info for local LLM
+        local_model_info = ModelInfo(
+            vision=False,
+            function_calling=True,
+            json_output=True,
+            family="llama",
+            context_window=8192,  # Llama 3.2 context window
+            max_output_tokens=4096,
+            input_price_per_million_tokens=0.0,  # Free for local
+            output_price_per_million_tokens=0.0,  # Free for local
+        )
+
+        return OpenAIChatCompletionClient(
+            model=settings.LOCAL_LLM_MODEL,
+            api_key=settings.LOCAL_LLM_API_KEY,
+            base_url=settings.LOCAL_LLM_BASE_URL,
+            model_info=local_model_info,
+        )
+    else:
+        # Use OpenAI
+        api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+        print(f"☁️  Using OpenAI: {settings.OPENAI_MODEL}")
+        return OpenAIChatCompletionClient(
+            model=settings.OPENAI_MODEL,
+            api_key=api_key,
+        )
 
 
 class NeuroCrew:
