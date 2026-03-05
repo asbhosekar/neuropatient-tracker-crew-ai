@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro Patient Tracker - Architecture</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d2e;
+            --surface2: #242840;
+            --border: #2e3354;
+            --text: #e4e6f0;
+            --muted: #8b8fa8;
+            --accent: #6c63ff;
+            --accent2: #00d4aa;
+            --warning: #ffb347;
+            --danger: #ff6b6b;
+            --blue: #4dabf7;
+            --pink: #f06595;
+            --cyan: #22b8cf;
+            --green: #51cf66;
+            --orange: #ff922b;
+            --purple: #9775fa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 50%, #1a1230 100%);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(108,99,255,0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(0,212,170,0.04) 0%, transparent 50%);
+            animation: drift 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes drift {
+            from { transform: translateX(-20px) translateY(-10px); }
+            to { transform: translateX(20px) translateY(10px); }
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 1.15rem;
+            position: relative;
+        }
+
+        .tech-badges {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .tech-badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 28px;
+            padding-left: 14px;
+            border-left: 3px solid var(--accent);
+        }
+
+        /* High-Level Flow */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+            padding: 30px 10px;
+        }
+
+        .flow-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            text-align: center;
+            min-width: 170px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .flow-box:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
+
+        .flow-box .icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .flow-box .label { font-weight: 600; font-size: 0.95rem; }
+        .flow-box .sub { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--accent);
+            padding: 0 8px;
+            flex-shrink: 0;
+        }
+
+        /* Agents Grid */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 18px;
+            margin-bottom: 50px;
+        }
+
+        .agent-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 14px 14px 0 0;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .agent-card.neurologist::before { background: var(--blue); }
+        .agent-card.neurologist:hover { border-color: var(--blue); }
+
+        .agent-card.architect::before { background: var(--purple); }
+        .agent-card.architect:hover { border-color: var(--purple); }
+
+        .agent-card.prognosis::before { background: var(--cyan); }
+        .agent-card.prognosis:hover { border-color: var(--cyan); }
+
+        .agent-card.treatment::before { background: var(--green); }
+        .agent-card.treatment:hover { border-color: var(--green); }
+
+        .agent-card.qa::before { background: var(--orange); }
+        .agent-card.qa:hover { border-color: var(--orange); }
+
+        .agent-card.report::before { background: var(--pink); }
+        .agent-card.report:hover { border-color: var(--pink); }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .agent-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .neurologist .agent-icon { background: rgba(77,171,247,0.15); }
+        .architect .agent-icon { background: rgba(151,117,250,0.15); }
+        .prognosis .agent-icon { background: rgba(34,184,207,0.15); }
+        .treatment .agent-icon { background: rgba(81,207,102,0.15); }
+        .qa .agent-icon { background: rgba(255,146,43,0.15); }
+        .report .agent-icon { background: rgba(240,101,149,0.15); }
+
+        .agent-name { font-weight: 600; font-size: 1.05rem; }
+        .agent-role { color: var(--muted); font-size: 0.8rem; }
+
+        .agent-desc {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .agent-methods {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .method-tag {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            color: var(--accent2);
+        }
+
+        /* Orchestrator */
+        .orchestrator-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .orchestrator-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 16px 16px 0 0;
+        }
+
+        .orch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin-top: 20px;
+        }
+
+        .orch-item h4 {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: var(--accent2);
+        }
+
+        .orch-item p {
+            font-size: 0.87rem;
+            color: var(--muted);
+        }
+
+        .orch-item code {
+            background: var(--surface2);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            color: var(--warning);
+        }
+
+        /* Data Models */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-bottom: 50px;
+        }
+
+        .model-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .model-card h4 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--blue);
+        }
+
+        .model-fields {
+            list-style: none;
+        }
+
+        .model-fields li {
+            font-size: 0.82rem;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(46,51,84,0.5);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .model-fields li:last-child { border-bottom: none; }
+
+        .field-name {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            color: var(--accent2);
+        }
+
+        .field-type {
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        /* Infrastructure */
+        .infra-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 18px;
+            margin-bottom: 50px;
+        }
+
+        .infra-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .infra-card h4 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .infra-card .sub-desc {
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-bottom: 14px;
+        }
+
+        .log-file {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--surface2);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.83rem;
+        }
+
+        .log-file .fname {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            color: var(--warning);
+        }
+
+        .log-file .fdesc {
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        /* File Tree */
+        .file-tree {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 50px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.84rem;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .file-tree .dir { color: var(--blue); }
+        .file-tree .file { color: var(--muted); }
+        .file-tree .highlight { color: var(--accent2); }
+        .file-tree .comment { color: #555; }
+
+        /* Sequence Diagram */
+        .sequence-section {
+            margin-bottom: 50px;
+        }
+
+        .sequence-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .seq-row {
+            display: flex;
+            align-items: center;
+            min-height: 52px;
+            position: relative;
+        }
+
+        .seq-actor {
+            width: 140px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .seq-actors-header {
+            display: flex;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .seq-actors-header .seq-actor {
+            padding: 8px;
+            background: var(--surface2);
+            border-radius: 8px;
+            margin: 0 4px;
+        }
+
+        .seq-message {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .seq-message .arrow-line {
+            flex: 1;
+            height: 2px;
+            background: var(--accent);
+            position: relative;
+            margin: 0 8px;
+        }
+
+        .seq-message .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid var(--accent);
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .seq-message .arrow-line.reverse::after {
+            right: auto;
+            left: -1px;
+            border-left: none;
+            border-right: 8px solid var(--accent2);
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .seq-message .arrow-line.reverse {
+            background: var(--accent2);
+        }
+
+        .seq-label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            white-space: nowrap;
+            background: var(--surface);
+            padding: 2px 8px;
+            border-radius: 4px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: -10px;
+        }
+
+        .seq-step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px 16px;
+            background: var(--surface2);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .seq-step-num {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+
+        .seq-step-text {
+            font-size: 0.88rem;
+        }
+
+        .seq-step-text strong {
+            color: var(--accent2);
+        }
+
+        .seq-step.green { border-left-color: var(--green); }
+        .seq-step.green .seq-step-num { background: var(--green); }
+
+        .seq-step.blue { border-left-color: var(--blue); }
+        .seq-step.blue .seq-step-num { background: var(--blue); }
+
+        .seq-step.orange { border-left-color: var(--orange); }
+        .seq-step.orange .seq-step-num { background: var(--orange); }
+
+        .seq-step.pink { border-left-color: var(--pink); }
+        .seq-step.pink .seq-step-num { background: var(--pink); }
+
+        .seq-step.purple { border-left-color: var(--purple); }
+        .seq-step.purple .seq-step-num { background: var(--purple); }
+
+        .seq-step.cyan { border-left-color: var(--cyan); }
+        .seq-step.cyan .seq-step-num { background: var(--cyan); }
+
+        /* Config */
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 50px;
+        }
+
+        .config-table th {
+            background: var(--surface2);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.85rem;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .config-table td {
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(46,51,84,0.4);
+        }
+
+        .config-table td:first-child {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            color: var(--warning);
+        }
+
+        .config-table td:nth-child(2) {
+            color: var(--muted);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8rem; }
+            .orch-grid { grid-template-columns: 1fr; }
+            .agents-grid { grid-template-columns: 1fr; }
+            .flow-container { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>Neuro Patient Tracker</h1>
+    <p>Multi-Agent AI System for Neurology Patient Tracking &amp; Prognosis</p>
+    <div class="tech-badges">
+        <span class="tech-badge">Microsoft AutoGen</span>
+        <span class="tech-badge">Pydantic v2</span>
+        <span class="tech-badge">Streamlit</span>
+        <span class="tech-badge">GPT-4o / Llama 3.2</span>
+        <span class="tech-badge">HIPAA-Compliant Logging</span>
+        <span class="tech-badge">FastAPI</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- High-Level Data Flow -->
+    <h2 class="section-title">High-Level Data Flow</h2>
+    <div class="flow-container">
+        <div class="flow-box">
+            <div class="icon">&#128104;&#8205;&#9877;&#65039;</div>
+            <div class="label">User Input</div>
+            <div class="sub">CLI / Streamlit UI</div>
+        </div>
+        <div class="flow-arrow">&#10132;</div>
+        <div class="flow-box">
+            <div class="icon">&#9881;&#65039;</div>
+            <div class="label">Orchestrator</div>
+            <div class="sub">NeuroCrew</div>
+        </div>
+        <div class="flow-arrow">&#10132;</div>
+        <div class="flow-box">
+            <div class="icon">&#129302;</div>
+            <div class="label">Agent Team</div>
+            <div class="sub">6 Specialized Agents</div>
+        </div>
+        <div class="flow-arrow">&#10132;</div>
+        <div class="flow-box">
+            <div class="icon">&#128202;</div>
+            <div class="label">LLM Provider</div>
+            <div class="sub">OpenAI / Local</div>
+        </div>
+        <div class="flow-arrow">&#10132;</div>
+        <div class="flow-box">
+            <div class="icon">&#128203;</div>
+            <div class="label">Output</div>
+            <div class="sub">Reports + Logs</div>
+        </div>
+    </div>
+
+    <!-- Agents -->
+    <h2 class="section-title">Specialized AI Agents</h2>
+    <div class="agents-grid">
+        <div class="agent-card neurologist">
+            <div class="agent-header">
+                <div class="agent-icon">&#129504;</div>
+                <div>
+                    <div class="agent-name">Neurologist Agent</div>
+                    <div class="agent-role">Primary Clinical Expert</div>
+                </div>
+            </div>
+            <div class="agent-desc">Reviews patient cases, interprets neurological exams, guides differential diagnosis, recommends diagnostic workups. Covers epilepsy, Parkinson's, dementia, MS, stroke, and more.</div>
+            <div class="agent-methods">
+                <span class="method-tag">get_red_flags()</span>
+                <span class="method-tag">get_workup_recommendations()</span>
+                <span class="method-tag">interpret_cognitive_score()</span>
+            </div>
+        </div>
+
+        <div class="agent-card architect">
+            <div class="agent-header">
+                <div class="agent-icon">&#127959;</div>
+                <div>
+                    <div class="agent-name">Clinical Architect Agent</div>
+                    <div class="agent-role">Data Structure &amp; Compliance</div>
+                </div>
+            </div>
+            <div class="agent-desc">Designs HIPAA-compliant data models, ensures healthcare standards compliance, defines standardized neurological assessment schemas with clinical validation rules.</div>
+            <div class="agent-methods">
+                <span class="method-tag">validate_data_model()</span>
+                <span class="method-tag">get_standard_assessments()</span>
+            </div>
+        </div>
+
+        <div class="agent-card prognosis">
+            <div class="agent-header">
+                <div class="agent-icon">&#128200;</div>
+                <div>
+                    <div class="agent-name">Prognosis Analyst Agent</div>
+                    <div class="agent-role">Longitudinal Data Analyst</div>
+                </div>
+            </div>
+            <div class="agent-desc">Analyzes longitudinal patient data for trends, calculates condition trajectory predictions, identifies risk factors, and generates evidence-based prognosis assessments.</div>
+            <div class="agent-methods">
+                <span class="method-tag">calculate_trend()</span>
+                <span class="method-tag">get_risk_factors()</span>
+            </div>
+        </div>
+
+        <div class="agent-card treatment">
+            <div class="agent-header">
+                <div class="agent-icon">&#128138;</div>
+                <div>
+                    <div class="agent-name">Treatment Advisor Agent</div>
+                    <div class="agent-role">Medication &amp; Treatment Planning</div>
+                </div>
+            </div>
+            <div class="agent-desc">Analyzes treatment effectiveness, suggests medication adjustments, recommends non-pharmacological interventions, flags drug interactions and contraindications.</div>
+            <div class="agent-methods">
+                <span class="method-tag">get_first_line_treatments()</span>
+                <span class="method-tag">evaluate_treatment_response()</span>
+                <span class="method-tag">check_escalation_criteria()</span>
+            </div>
+        </div>
+
+        <div class="agent-card qa">
+            <div class="agent-header">
+                <div class="agent-icon">&#9989;</div>
+                <div>
+                    <div class="agent-name">QA Validator Agent</div>
+                    <div class="agent-role">Data Quality &amp; Clinical Logic</div>
+                </div>
+            </div>
+            <div class="agent-desc">Validates clinical data accuracy, checks medical logic consistency, identifies anomalies, verifies assessment score ranges, flags data entry errors.</div>
+            <div class="agent-methods">
+                <span class="method-tag">validate_assessment_score()</span>
+                <span class="method-tag">validate_vital_signs()</span>
+                <span class="method-tag">check_score_consistency()</span>
+                <span class="method-tag">validate_medication_dosage()</span>
+            </div>
+        </div>
+
+        <div class="agent-card report">
+            <div class="agent-header">
+                <div class="agent-icon">&#128196;</div>
+                <div>
+                    <div class="agent-name">Report Generator Agent</div>
+                    <div class="agent-role">Clinical Documentation</div>
+                </div>
+            </div>
+            <div class="agent-desc">Generates comprehensive clinical prognosis reports, visit summaries, trend analysis documentation, and patient-friendly condition summaries.</div>
+            <div class="agent-methods">
+                <span class="method-tag">get_report_template()</span>
+                <span class="method-tag">generate_report_header()</span>
+                <span class="method-tag">format_trend_summary()</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orchestrator -->
+    <h2 class="section-title">Orchestrator: NeuroCrew</h2>
+    <div class="orchestrator-section">
+        <p style="color: var(--muted); font-size: 0.92rem; margin-bottom: 16px;">
+            The NeuroCrew orchestrator coordinates all 6 agents through a <code>RoundRobinGroupChat</code>, managing conversation flow, streaming output, logging, and termination.
+        </p>
+        <div class="orch-grid">
+            <div class="orch-item">
+                <h4>Agent Creation</h4>
+                <p>Instantiates all 6 specialized agents with a shared LLM model client (OpenAI or local). Each agent is an <code>AssistantAgent</code> with custom system prompt and tools.</p>
+            </div>
+            <div class="orch-item">
+                <h4>Team Coordination</h4>
+                <p>Uses <code>RoundRobinGroupChat</code> so agents take turns responding, building on each other's analysis for collaborative clinical reasoning.</p>
+            </div>
+            <div class="orch-item">
+                <h4>Termination Conditions</h4>
+                <p><code>MaxMessageTermination(12)</code> stops after 12 messages. <code>TextMentionTermination("TERMINATE")</code> allows early exit when agents reach consensus.</p>
+            </div>
+            <div class="orch-item">
+                <h4>Streaming &amp; Logging</h4>
+                <p>Real-time message streaming to UI. Every agent message logged with correlation IDs, PHI access tracked, and telemetry recorded per call.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversation Flow -->
+    <h2 class="section-title">Conversation Flow (Prognosis Analysis)</h2>
+    <div class="sequence-container" style="margin-bottom: 50px;">
+        <div class="seq-step blue">
+            <div class="seq-step-num">1</div>
+            <div class="seq-step-text"><strong>User</strong> submits patient data via Streamlit UI or CLI menu</div>
+        </div>
+        <div class="seq-step purple">
+            <div class="seq-step-num">2</div>
+            <div class="seq-step-text"><strong>Orchestrator</strong> prepares task prompt, initializes RoundRobinGroupChat with all agents</div>
+        </div>
+        <div class="seq-step">
+            <div class="seq-step-num">3</div>
+            <div class="seq-step-text"><strong>Neurologist</strong> provides initial clinical assessment and differential diagnosis</div>
+        </div>
+        <div class="seq-step cyan">
+            <div class="seq-step-num">4</div>
+            <div class="seq-step-text"><strong>Prognosis Analyst</strong> analyzes longitudinal data, calculates trends and trajectories</div>
+        </div>
+        <div class="seq-step green">
+            <div class="seq-step-num">5</div>
+            <div class="seq-step-text"><strong>Treatment Advisor</strong> recommends medications, flags interactions, suggests adjustments</div>
+        </div>
+        <div class="seq-step orange">
+            <div class="seq-step-num">6</div>
+            <div class="seq-step-text"><strong>QA Validator</strong> validates all data, checks clinical logic and score consistency</div>
+        </div>
+        <div class="seq-step pink">
+            <div class="seq-step-num">7</div>
+            <div class="seq-step-text"><strong>Report Generator</strong> compiles findings into a structured clinical report</div>
+        </div>
+        <div class="seq-step purple">
+            <div class="seq-step-num">8</div>
+            <div class="seq-step-text"><strong>Clinical Architect</strong> reviews data model compliance, HIPAA adherence</div>
+        </div>
+        <div class="seq-step blue">
+            <div class="seq-step-num">9</div>
+            <div class="seq-step-text">Round-robin continues until <strong>MaxMessage(12)</strong> or <strong>TERMINATE</strong> signal</div>
+        </div>
+    </div>
+
+    <!-- Data Models -->
+    <h2 class="section-title">Data Models (Pydantic v2)</h2>
+    <div class="models-grid">
+        <div class="model-card">
+            <h4>Patient</h4>
+            <ul class="model-fields">
+                <li><span class="field-name">id</span><span class="field-type">str (uuid)</span></li>
+                <li><span class="field-name">first_name</span><span class="field-type">str (1-100)</span></li>
+                <li><span class="field-name">last_name</span><span class="field-type">str (1-100)</span></li>
+                <li><span class="field-name">date_of_birth</span><span class="field-type">date</span></li>
+                <li><span class="field-name">gender</span><span class="field-type">Gender enum</span></li>
+                <li><span class="field-name">primary_condition</span><span class="field-type">NeurologicalCondition</span></li>
+                <li><span class="field-name">email, phone</span><span class="field-type">optional str</span></li>
+                <li><span class="field-name">is_active</span><span class="field-type">bool</span></li>
+            </ul>
+        </div>
+
+        <div class="model-card">
+            <h4>Visit</h4>
+            <ul class="model-fields">
+                <li><span class="field-name">patient_id</span><span class="field-type">str</span></li>
+                <li><span class="field-name">visit_date</span><span class="field-type">datetime</span></li>
+                <li><span class="field-name">chief_complaint</span><span class="field-type">str</span></li>
+                <li><span class="field-name">vitals</span><span class="field-type">VitalSigns</span></li>
+                <li><span class="field-name">assessment</span><span class="field-type">NeurologicalAssessment</span></li>
+                <li><span class="field-name">medications</span><span class="field-type">list[MedicationRecord]</span></li>
+                <li><span class="field-name">diagnosis_notes</span><span class="field-type">str</span></li>
+                <li><span class="field-name">treatment_plan</span><span class="field-type">str</span></li>
+            </ul>
+        </div>
+
+        <div class="model-card">
+            <h4>PrognosisAnalysis</h4>
+            <ul class="model-fields">
+                <li><span class="field-name">patient_id</span><span class="field-type">str</span></li>
+                <li><span class="field-name">overall_trend</span><span class="field-type">PrognosisTrend</span></li>
+                <li><span class="field-name">cognitive_trend</span><span class="field-type">PrognosisTrend</span></li>
+                <li><span class="field-name">motor_trend</span><span class="field-type">PrognosisTrend</span></li>
+                <li><span class="field-name">current_severity</span><span class="field-type">SeverityLevel</span></li>
+                <li><span class="field-name">predicted_severity_3mo</span><span class="field-type">SeverityLevel</span></li>
+                <li><span class="field-name">confidence_score</span><span class="field-type">float (0-1)</span></li>
+                <li><span class="field-name">recommendations</span><span class="field-type">list[str]</span></li>
+            </ul>
+        </div>
+
+        <div class="model-card">
+            <h4>NeurologicalAssessment</h4>
+            <ul class="model-fields">
+                <li><span class="field-name">mmse_score</span><span class="field-type">int (0-30)</span></li>
+                <li><span class="field-name">moca_score</span><span class="field-type">int (0-30)</span></li>
+                <li><span class="field-name">motor_function_score</span><span class="field-type">int (0-100)</span></li>
+                <li><span class="field-name">symptom_severity</span><span class="field-type">int (0-10)</span></li>
+                <li><span class="field-name">seizure_frequency</span><span class="field-type">float</span></li>
+                <li><span class="field-name">notes</span><span class="field-type">optional str</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Infrastructure -->
+    <h2 class="section-title">Infrastructure &amp; Cross-Cutting Concerns</h2>
+    <div class="infra-grid">
+        <div class="infra-card">
+            <h4 style="color: var(--danger);">HIPAA-Compliant Audit Logging</h4>
+            <div class="sub-desc">Singleton ClinicalAuditLogger with 23 event types, structured JSON output, PHI hashing (SHA256)</div>
+            <div class="log-file"><span class="fname">app.log</span><span class="fdesc">General app logs (10MB rotate, 10 files)</span></div>
+            <div class="log-file"><span class="fname">audit.log</span><span class="fdesc">Critical audit trail (daily, 365 days)</span></div>
+            <div class="log-file"><span class="fname">agents.log</span><span class="fdesc">Agent conversations (50MB rotate, 20 files)</span></div>
+            <div class="log-file"><span class="fname">phi_access.log</span><span class="fdesc">PHI access tracking (daily, 7 years)</span></div>
+        </div>
+
+        <div class="infra-card">
+            <h4 style="color: var(--cyan);">LLM Telemetry</h4>
+            <div class="sub-desc">Singleton RuntimeTelemetry tracking token usage, latency, and cost estimation per LLM call</div>
+            <div class="log-file"><span class="fname">llm_telemetry.jsonl</span><span class="fdesc">All LLM calls (JSONL)</span></div>
+            <div class="log-file"><span class="fname">session_*_report.json</span><span class="fdesc">Session metrics (JSON)</span></div>
+            <div class="log-file"><span class="fname">session_*_report.txt</span><span class="fdesc">Human-readable cost report</span></div>
+            <div style="margin-top: 10px; font-size: 0.82rem; color: var(--muted);">
+                Tracks: tokens (prompt/completion), latency (ms), cost ($), error rates, per-agent breakdown
+            </div>
+        </div>
+
+        <div class="infra-card">
+            <h4 style="color: var(--green);">Dual LLM Provider Support</h4>
+            <div class="sub-desc">Config-driven model selection via LLM_PROVIDER environment variable</div>
+            <div style="margin-top: 8px;">
+                <div class="log-file"><span class="fname">OpenAI</span><span class="fdesc">GPT-4o-mini (default cloud)</span></div>
+                <div class="log-file"><span class="fname">Local LLM</span><span class="fdesc">Llama 3.2 via LM Studio / Ollama</span></div>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.82rem; color: var(--muted);">
+                OpenAI-compatible API endpoint for seamless local/cloud switching
+            </div>
+        </div>
+
+        <div class="infra-card">
+            <h4 style="color: var(--purple);">UI Layer: Streamlit</h4>
+            <div class="sub-desc">Multi-page web interface with real-time agent streaming</div>
+            <div style="font-size: 0.85rem; color: var(--muted); line-height: 1.7;">
+                <div>&#8226; <strong style="color: var(--text);">Home</strong> &mdash; Feature overview &amp; navigation</div>
+                <div>&#8226; <strong style="color: var(--text);">Prognosis Analysis</strong> &mdash; Multi-agent clinical consultation</div>
+                <div>&#8226; <strong style="color: var(--text);">Single Consultation</strong> &mdash; Direct agent interaction</div>
+                <div>&#8226; <strong style="color: var(--text);">About</strong> &mdash; Architecture &amp; tech stack</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Structure -->
+    <h2 class="section-title">Project Structure</h2>
+    <div class="file-tree">
+<span class="dir">neuro-patient-tracker/</span>
+<span class="highlight">  app.py</span>                        <span class="comment"># Streamlit web UI</span>
+<span class="dir">  src/</span>
+<span class="highlight">    main.py</span>                     <span class="comment"># CLI entry point</span>
+<span class="highlight">    orchestrator.py</span>             <span class="comment"># NeuroCrew orchestrator + RoundRobinGroupChat</span>
+<span class="dir">    agents/</span>
+<span class="file">      base_agent.py</span>             <span class="comment"># BaseNeurologistAgent (shared interface)</span>
+<span class="file">      neurologist.py</span>            <span class="comment"># Neurologist Agent</span>
+<span class="file">      clinical_architect.py</span>     <span class="comment"># Clinical Architect Agent</span>
+<span class="file">      prognosis_analyst.py</span>      <span class="comment"># Prognosis Analyst Agent</span>
+<span class="file">      treatment_advisor.py</span>      <span class="comment"># Treatment Advisor Agent</span>
+<span class="file">      qa_validator.py</span>           <span class="comment"># QA Validator Agent</span>
+<span class="file">      report_generator.py</span>       <span class="comment"># Report Generator Agent</span>
+<span class="file">      backend_developer.py</span>      <span class="comment"># Backend Developer Agent (API)</span>
+<span class="dir">    models/</span>
+<span class="file">      schemas.py</span>                <span class="comment"># Pydantic v2 data models</span>
+<span class="dir">    config/</span>
+<span class="file">      settings.py</span>               <span class="comment"># Environment config (.env)</span>
+<span class="dir">    logging/</span>
+<span class="file">      audit_logger.py</span>           <span class="comment"># HIPAA-compliant audit logging</span>
+<span class="file">      telemetry.py</span>              <span class="comment"># LLM runtime telemetry</span>
+<span class="dir">  tests/</span>
+<span class="file">    conftest.py</span>                 <span class="comment"># Pytest fixtures</span>
+<span class="file">    test_config.py</span>              <span class="comment"># Config tests</span>
+<span class="file">    test_models.py</span>              <span class="comment"># Schema tests</span>
+<span class="dir">  docs/</span>                          <span class="comment"># Documentation</span>
+<span class="dir">  logs/</span>                          <span class="comment"># Output log files</span>
+    </div>
+
+    <!-- Config Table -->
+    <h2 class="section-title">Configuration (Environment Variables)</h2>
+    <table class="config-table">
+        <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>LLM_PROVIDER</td><td>"local"</td><td>LLM backend: "openai" or "local"</td></tr>
+            <tr><td>OPENAI_API_KEY</td><td>-</td><td>OpenAI API key (when provider is openai)</td></tr>
+            <tr><td>OPENAI_MODEL</td><td>"gpt-4o-mini"</td><td>OpenAI model name</td></tr>
+            <tr><td>LOCAL_LLM_BASE_URL</td><td>"http://localhost:1234/v1"</td><td>Local LLM API endpoint</td></tr>
+            <tr><td>LOCAL_LLM_MODEL</td><td>"llama-3.2-3b-instruct"</td><td>Local model name</td></tr>
+            <tr><td>DATABASE_URL</td><td>"sqlite:///./neuro_tracker.db"</td><td>Database connection string</td></tr>
+            <tr><td>DEBUG</td><td>false</td><td>Enable debug logging</td></tr>
+            <tr><td>LOG_LEVEL</td><td>"INFO"</td><td>Logging verbosity</td></tr>
+        </tbody>
+    </table>
+
+</div>
+
+<footer>
+    Neuro Patient Tracker &mdash; Multi-Agent AI Architecture Overview &mdash; Built with Microsoft AutoGen
+</footer>
+
+</body>
+</html>

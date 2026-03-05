@@ -238,23 +238,33 @@ class NeuroCrew:
         )
         
         task = f"""
-Perform a comprehensive prognosis analysis for this patient:
+## Multi-Agent Prognosis Analysis Request
 
-Patient ID: {patient_id}
-Condition: {patient_data.get('condition', 'Unknown')}
-Recent Visits: {patient_data.get('visit_count', 0)}
+**Patient ID:** {patient_id}
+**Condition:** {patient_data.get('condition', 'Unknown')}
+**Recent Visits:** {patient_data.get('visit_count', 0)}
 
-Clinical Data:
+### Clinical Data
 {patient_data.get('clinical_summary', 'No clinical data provided')}
 
-Each specialist should contribute:
-1. Neurologist: Review case, identify key clinical findings
-2. Prognosis Analyst: Analyze trends and trajectory
-3. Treatment Advisor: Suggest any treatment adjustments
-4. QA Validator: Verify data accuracy
-5. Report Generator: Summarize findings
+### Instructions for Each Specialist
+Analyze this patient case sequentially. Each agent must follow their structured reasoning process and output format:
 
-Collaborate to provide a comprehensive assessment. When all specialists have contributed their analysis, end the discussion.
+1. **Neurologist** (FIRST): Perform your 5-step clinical reasoning process. Identify key findings, check for red flags, provide differential considerations. Use your CLINICAL ASSESSMENT format.
+
+2. **Prognosis Analyst** (SECOND): Using the Neurologist's findings, perform your analytical reasoning process. Calculate trends against condition benchmarks, project 3-month and 6-month trajectory. Use your PROGNOSIS ANALYSIS format with confidence score.
+
+3. **Treatment Advisor** (THIRD): Review current medications and the trends identified. Follow your clinical decision process to assess treatment response and recommend specific adjustments with doses. Use your TREATMENT RECOMMENDATION format.
+
+4. **QA Validator** (FOURTH): Validate all clinical data in this case. Check score ranges, medication dosages, temporal consistency. Use your VALIDATION REPORT format with data quality score.
+
+5. **Report Generator** (FIFTH): Synthesize ALL findings from the team into a unified clinical report. Do not simply list each agent's output - integrate into a cohesive document. Use your standard report template.
+
+### Collaboration Rules
+- Build on previous agents' findings - reference and integrate, don't repeat
+- If you disagree with a previous agent's assessment, state your reasoning
+- Flag any data gaps that limit your analysis
+- When all 5 specialists have contributed their structured analysis, say TERMINATE
 """
         await self.run_conversation(task, patient_id=patient_id)
         
@@ -274,11 +284,17 @@ Collaborate to provide a comprehensive assessment. When all specialists have con
             question: Clinical question or scenario
         """
         task = f"""
-Clinical Consultation Request:
+## Clinical Consultation Request
 
 {question}
 
-Please have the appropriate specialists collaborate to address this question.
+### Instructions
+Each specialist should contribute their expertise using their structured response format:
+- Follow your step-by-step reasoning process
+- Use your designated output format
+- Build on previous agents' analysis - integrate, don't repeat
+- State your confidence level and any limitations
+- When the team has provided a comprehensive answer, say TERMINATE
 """
         await self.run_conversation(task)
 
@@ -352,7 +368,7 @@ class SingleAgentChat:
         termination = MaxMessageTermination(3)
         team = RoundRobinGroupChat(participants=[agent], termination_condition=termination)
         
-        task = f"Analyze the prognosis for this patient:\n\n{patient_summary}"
+        task = f"Analyze the prognosis for this patient. Follow your step-by-step analytical reasoning process and use your PROGNOSIS ANALYSIS response format. Include confidence score and benchmarks.\n\n{patient_summary}"
         await self._run_with_logging(team, task, "PrognosisAnalyst")
     
     async def consult_treatment(self, case_details: str) -> None:
@@ -366,7 +382,7 @@ class SingleAgentChat:
         termination = MaxMessageTermination(3)
         team = RoundRobinGroupChat(participants=[agent], termination_condition=termination)
         
-        task = f"Provide treatment recommendations for:\n\n{case_details}"
+        task = f"Provide treatment recommendations following your clinical decision process. Use your TREATMENT RECOMMENDATION response format with specific doses, rationale, alternatives, and monitoring plan.\n\n{case_details}"
         await self._run_with_logging(team, task, "TreatmentAdvisor")
 
 
