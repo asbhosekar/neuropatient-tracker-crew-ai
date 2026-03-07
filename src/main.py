@@ -22,17 +22,17 @@ _telemetry = None
 def _shutdown():
     """Clean shutdown of logging and telemetry systems."""
     global _telemetry
-    
+
     # Print and save session cost report
     if _telemetry:
         print("\n" + "=" * 60)
-        print("📊 LLM Session Cost Report")
+        print("LLM Session Cost Report")
         print("=" * 60)
         _telemetry.print_cost_summary()
-        
+
         # Save session report to file
         _telemetry.save_session_report()
-    
+
     # Log system stop
     if _logger:
         _logger.log_system_stop()
@@ -41,9 +41,9 @@ def _shutdown():
 async def run_demo():
     """Run a demonstration with sample patient data."""
     print("\n" + "=" * 60)
-    print("🧠 NeuroCrew AI - Demo Mode")
+    print("NeuroCrew AI - Demo Mode")
     print("=" * 60)
-    
+
     # Sample patient for demonstration
     sample_patient = {
         "id": "PT-2024-001",
@@ -72,12 +72,12 @@ Concerns:
 - Mild cognitive complaints (MoCA: 24/30)
 """
     }
-    
-    print("\n📋 Running prognosis analysis for sample patient...")
+
+    print("\nRunning prognosis analysis for sample patient...")
     print(f"   Patient ID: {sample_patient['id']}")
     print(f"   Condition: {sample_patient['condition']}")
     print("\n" + "-" * 60 + "\n")
-    
+
     crew = NeuroCrew()
     await crew.run_prognosis_analysis(sample_patient)
 
@@ -85,12 +85,12 @@ Concerns:
 async def run_single_agent_demo(agent_type: str = "neurologist"):
     """
     Run a simple single-agent consultation demo.
-    
+
     Args:
         agent_type: Type of agent to consult (neurologist, prognosis, treatment)
     """
     chat = SingleAgentChat()
-    
+
     if agent_type == "neurologist":
         question = """
 A 45-year-old female presents with:
@@ -102,9 +102,9 @@ A 45-year-old female presents with:
 
 What is your assessment and recommended workup?
 """
-        print("\n🩺 Consulting Neurologist Agent...")
+        print("\nConsulting Neurologist Agent...")
         await chat.consult_neurologist(question)
-    
+
     elif agent_type == "prognosis":
         summary = """
 Patient: 72-year-old male with Alzheimer's Disease
@@ -119,9 +119,9 @@ MMSE Scores over time:
 
 Currently on Donepezil 10mg daily.
 """
-        print("\n📊 Running Prognosis Analysis...")
+        print("\nRunning Prognosis Analysis...")
         await chat.consult_prognosis(summary)
-    
+
     elif agent_type == "treatment":
         case = """
 Patient with epilepsy (focal seizures with impaired awareness)
@@ -132,44 +132,44 @@ Patient with epilepsy (focal seizures with impaired awareness)
 
 Should we adjust the treatment?
 """
-        print("\n💊 Getting Treatment Recommendations...")
+        print("\nGetting Treatment Recommendations...")
         await chat.consult_treatment(case)
 
 
 def main():
     """Main entry point."""
     global _logger, _telemetry
-    
+
     # Initialize logging system
     _logger = init_logging()
-    
+
     # Initialize telemetry for LLM cost tracking
     _telemetry = init_telemetry()
-    
+
     # Register cleanup on exit
     atexit.register(_shutdown)
-    
+
     # Check LLM configuration based on provider
     if settings.LLM_PROVIDER == "openai":
         api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
         if not api_key or api_key == "your_openai_api_key_here":
             _logger.log_error("OPENAI_API_KEY not configured")
-            print("\n❌ Error: OPENAI_API_KEY not configured!")
+            print("\nError: OPENAI_API_KEY not configured!")
             print("   Please set your API key:")
             print("   - In .env file, OR")
             print("   - As global environment variable")
             sys.exit(1)
     elif settings.LLM_PROVIDER == "local":
-        print(f"\n🖥️  Using Local LLM: {settings.LOCAL_LLM_MODEL}")
-        print(f"📡 Endpoint: {settings.LOCAL_LLM_BASE_URL}")
+        print(f"\n[Local LLM] Using: {settings.LOCAL_LLM_MODEL}")
+        print(f"[Endpoint] {settings.LOCAL_LLM_BASE_URL}")
         print("   Make sure your local LLM server is running!")
     else:
-        print(f"\n⚠️  Warning: Unknown LLM_PROVIDER: {settings.LLM_PROVIDER}")
+        print(f"\nWarning: Unknown LLM_PROVIDER: {settings.LLM_PROVIDER}")
         print("   Defaulting to local LLM...")
-    
-    print("\n🧠 NeuroCrew AI")
+
+    print("\nNeuroCrew AI")
     print("-" * 40)
-    print(f"📊 Telemetry: Session {_telemetry._session_id[:8]}... started")
+    print(f"Telemetry: Session {_telemetry._session_id[:8]}... started")
     print("-" * 40)
     print("Select mode:")
     print("  1. Demo with sample patient (multi-agent)")
@@ -178,10 +178,10 @@ def main():
     print("  4. Single agent demo (Treatment)")
     print("  5. Show cost summary")
     print("  0. Exit")
-    
+
     try:
         choice = input("\nEnter choice (1-5, 0 to exit): ").strip()
-        
+
         if choice == "1":
             asyncio.run(run_demo())
         elif choice == "2":
@@ -193,13 +193,13 @@ def main():
         elif choice == "5":
             _telemetry.print_cost_summary()
         elif choice == "0":
-            print("👋 Goodbye!")
+            print("Goodbye!")
         else:
             print("Invalid choice. Running demo mode...")
             asyncio.run(run_demo())
-            
+
     except KeyboardInterrupt:
-        print("\n\n👋 Goodbye!")
+        print("\n\nGoodbye!")
     except Exception as e:
         _logger.log_error(f"Application error: {str(e)}", exception=e)
         raise

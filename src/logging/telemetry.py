@@ -279,35 +279,35 @@ class RuntimeTelemetry:
         s = self._session_metrics
         
         report = f"""
-╔══════════════════════════════════════════════════════════════╗
-║              NeuroCrew AI - Session Cost Report              ║
-╠══════════════════════════════════════════════════════════════╣
-║ Session ID: {s.session_id:<47} ║
-║ Duration: {s.start_time[:19]} to now                       ║
-╠══════════════════════════════════════════════════════════════╣
-║ CALLS                                                        ║
-║   Total:      {s.total_calls:<10} Success: {s.successful_calls:<10} Failed: {s.failed_calls:<5} ║
-╠══════════════════════════════════════════════════════════════╣
-║ TOKENS                                                       ║
-║   Prompt:     {s.total_prompt_tokens:<15,}                             ║
-║   Completion: {s.total_completion_tokens:<15,}                             ║
-║   Total:      {s.total_tokens:<15,}                             ║
-╠══════════════════════════════════════════════════════════════╣
-║ COST                                                         ║
-║   Estimated:  ${s.total_cost_usd:<10.4f} USD                            ║
-╠══════════════════════════════════════════════════════════════╣
-║ PERFORMANCE                                                  ║
-║   Avg Latency: {s.avg_latency_ms:,.0f} ms                                  ║
-╠══════════════════════════════════════════════════════════════╣
-║ BY AGENT                                                     ║"""
-        
++--------------------------------------------------------------+
+|              NeuroCrew AI - Session Cost Report               |
++--------------------------------------------------------------+
+| Session ID: {s.session_id:<47} |
+| Duration: {s.start_time[:19]} to now                        |
++--------------------------------------------------------------+
+| CALLS                                                        |
+|   Total:      {s.total_calls:<10} Success: {s.successful_calls:<10} Failed: {s.failed_calls:<5} |
++--------------------------------------------------------------+
+| TOKENS                                                       |
+|   Prompt:     {s.total_prompt_tokens:<15,}                             |
+|   Completion: {s.total_completion_tokens:<15,}                             |
+|   Total:      {s.total_tokens:<15,}                             |
++--------------------------------------------------------------+
+| COST                                                         |
+|   Estimated:  ${s.total_cost_usd:<10.4f} USD                            |
++--------------------------------------------------------------+
+| PERFORMANCE                                                  |
+|   Avg Latency: {s.avg_latency_ms:,.0f} ms                                  |
++--------------------------------------------------------------+
+| BY AGENT                                                     |"""
+
         for agent, tokens in s.tokens_by_agent.items():
             cost = s.cost_by_agent.get(agent, 0)
             calls = s.calls_by_agent.get(agent, 0)
-            report += f"\n║   {agent:<15} {calls:>3} calls  {tokens:>8,} tokens  ${cost:.4f}  ║"
-        
+            report += f"\n|   {agent:<15} {calls:>3} calls  {tokens:>8,} tokens  ${cost:.4f}  |"
+
         report += """
-╚══════════════════════════════════════════════════════════════╝"""
++--------------------------------------------------------------+"""
         
         return report
     

@@ -37,8 +37,8 @@ def get_model_client() -> OpenAIChatCompletionClient:
     """
     if settings.LLM_PROVIDER == "local":
         # Use local LLM with OpenAI-compatible endpoint
-        print(f"🖥️  Using local LLM: {settings.LOCAL_LLM_MODEL}")
-        print(f"📡 Endpoint: {settings.LOCAL_LLM_BASE_URL}")
+        print(f"[Local LLM] Using: {settings.LOCAL_LLM_MODEL}")
+        print(f"[Endpoint] {settings.LOCAL_LLM_BASE_URL}")
 
         # Define model info for local LLM
         local_model_info = ModelInfo(
@@ -61,7 +61,7 @@ def get_model_client() -> OpenAIChatCompletionClient:
     else:
         # Use OpenAI
         api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
-        print(f"☁️  Using OpenAI: {settings.OPENAI_MODEL}")
+        print(f"[OpenAI] Using: {settings.OPENAI_MODEL}")
         return OpenAIChatCompletionClient(
             model=settings.OPENAI_MODEL,
             api_key=api_key,
