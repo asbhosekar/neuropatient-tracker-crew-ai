@@ -1,108 +1,130 @@
-# 🧠 Neuro Patient Tracker
+# Neuro Patient Tracker
 
-**AI-powered Patient Tracking System for Neurologists with Prognosis Analysis**
+**AI-powered Clinical Decision Support System for Neurology**
 
-Built using Microsoft AutoGen multi-agent framework.
+Multi-agent AI system built on Microsoft AutoGen 0.4+ with 6 specialized clinical agents that collaborate to analyze patient data, generate prognoses, and recommend treatments.
 
-## 🎯 Overview
+## Overview
 
-A comprehensive patient tracking system designed for neurologists to:
-- Track patient visits and neurological assessments over time
-- Monitor conditions: Epilepsy, Migraines, Parkinson's, MS, etc.
-- Generate prognosis reports with trend analysis
-- Predict condition trajectories based on historical data
+- **6 AI Agents**: Neurologist, Prognosis Analyst, Treatment Advisor, QA Validator, Report Generator, Clinical Architect
+- **7 Neurological Conditions**: Epilepsy, Migraine, Parkinson's, MS, Alzheimer's, Stroke, Neuropathy
+- **Dual LLM Support**: OpenAI GPT-4o-mini or local models via Ollama (Phi-3, Llama 3.2)
+- **Professional UI**: Streamlit web interface with clinical dark theme
+- **HIPAA-Aware Logging**: PHI hashing (SHA256), audit trails, 7-year retention
+- **Advanced Prompt Engineering**: Chain-of-Thought, Few-Shot, Self-Review, Confidence Calibration
 
-## 🤖 Agent Architecture
+## Quick Start
 
-| Agent | Role |
-|-------|------|
-| **Clinical Architect** | Designs data models, ensures HIPAA compliance |
-| **Backend Developer** | Builds FastAPI services, database layer |
-| **Prognosis Analyst** | Analyzes trends, predicts trajectories |
-| **QA Validator** | Tests code, validates medical logic |
-| **Report Generator** | Creates prognosis reports, summaries |
-| **Documentation Agent** | Generates API docs, user guides |
+```bash
+# Clone and setup
+git clone https://github.com/asbhosekar/neuropatient-tracker-crew-ai.git
+cd neuropatient-tracker-crew-ai
+python -m venv .venv
+.venv\Scripts\Activate.ps1   # Windows
+pip install -e ".[dev]"
 
-## 📁 Project Structure
+# Configure LLM provider in .env
+# Option A: Local (default) - requires Ollama running
+LLM_PROVIDER=local
+LOCAL_LLM_BASE_URL=http://localhost:11434/v1
+LOCAL_LLM_MODEL=phi3:mini-128k
+
+# Option B: OpenAI
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-your-key-here
+
+# Run Streamlit UI
+streamlit run app.py --server.port 8503
+
+# Or run CLI
+python -m src.main
+
+# Run tests
+pytest tests/ -v
+```
+
+## Architecture
+
+```
+User (Streamlit/CLI) -> NeuroCrew Orchestrator -> RoundRobinGroupChat -> 6 Agents -> LLM -> Report
+```
+
+### AI Agents
+
+| Agent | Role | Techniques |
+|-------|------|------------|
+| **Neurologist** | 5-step clinical reasoning, differential diagnosis, red flag screening | CoT, Few-Shot, Self-Review |
+| **Prognosis Analyst** | Trend calculation, trajectory projection, condition benchmarks | CoT, Benchmarks, Confidence 0-1 |
+| **Treatment Advisor** | Medication optimization, drug interaction screening, dose titration | CoT, Drug DB, Guardrails |
+| **Report Generator** | Integrated synthesis, executive summary, follow-up planning | Template, Integration |
+| **QA Validator** | 6-step validation, score range checks, anomaly detection | Ref Tables, Quality Score |
+| **Clinical Architect** | HIPAA 18-identifier audit, data model review | HIPAA Audit, Compliance |
+
+## Project Structure
 
 ```
 neuro-patient-tracker/
-├── src/
-│   ├── agents/           # AutoGen agent definitions
-│   ├── models/           # Pydantic data models
-│   ├── services/         # Business logic
-│   ├── api/              # FastAPI endpoints
-│   └── config/           # Configuration
-├── tests/                # Unit & integration tests
-├── output/               # Generated artifacts
-└── docs/                 # Documentation
+    app.py                      -- Streamlit web UI (clinical dark theme)
+    pyproject.toml              -- Dependencies and project config
+    .env                        -- LLM provider and environment config
+    src/
+        main.py                 -- CLI entry point
+        orchestrator.py         -- NeuroCrew + SingleAgentChat
+        agents/
+            base_agent.py       -- BaseNeurologistAgent (abstract)
+            neurologist.py      -- Clinical expert (5-step CoT)
+            prognosis_analyst.py -- Trend analysis (benchmarks)
+            treatment_advisor.py -- Medication planning (drug DB)
+            qa_validator.py     -- Data quality (6-step validation)
+            report_generator.py -- Clinical documentation
+            clinical_architect.py -- HIPAA compliance
+        models/
+            schemas.py          -- Pydantic v2 data models
+        config/
+            settings.py         -- Environment-based config
+        logging/
+            audit_logger.py     -- HIPAA audit (SHA256 hashing)
+            telemetry.py        -- LLM token/cost tracking
+    data/
+        test_patients.json      -- 12 test patient records
+    tests/                      -- pytest test suite
+    docs/
+        architecture.html       -- Interactive architecture visualization
+        architecture-onepage.html -- Compact one-page architecture (landscape)
+        code-review.html        -- Code review report with findings
 ```
 
-## 🚀 Quick Start
+## Tech Stack
 
-```bash
-# Create virtual environment
-python -m venv .venv
-.venv\Scripts\Activate.ps1  # Windows
+- **Framework**: Microsoft AutoGen 0.4+ (multi-agent orchestration)
+- **LLM**: OpenAI GPT-4o-mini / Ollama (Phi-3, Llama 3.2)
+- **UI**: Streamlit with custom clinical CSS
+- **Data Models**: Pydantic v2 with strict validation
+- **Logging**: HIPAA-compliant audit logging with SHA256 PHI hashing
+- **Telemetry**: LLM token/cost tracking per session
+- **Testing**: pytest
 
-# Install dependencies
-pip install -e ".[dev]"
+## Documentation
 
-# Set up environment
-copy .env.example .env
-# Edit .env - Choose your LLM provider:
-# - For Local Llama 3.2: Set LLM_PROVIDER=local (default)
-# - For OpenAI: Set LLM_PROVIDER=openai and add OPENAI_API_KEY
+- [Architecture (Interactive)](docs/architecture.html) -- Full system visualization with animations
+- [Architecture (One Page)](docs/architecture-onepage.html) -- Compact landscape overview
+- [Code Review Report](docs/code-review.html) -- Security, quality, and architecture findings
 
-# Run with CLI
-python -m src.main
+## Test Data
 
-# OR Run with Streamlit Web UI
-streamlit run app.py
-```
+12 diverse patient records in `data/test_patients.json` covering all 7 neurological conditions with full visit history, vitals, assessments, medications, and diagnosis notes.
 
-## 📊 Key Features
+## Configuration
 
-- **Patient Management**: CRUD operations for patient records
-- **Visit Tracking**: Log appointments with neurological assessments
-- **Prognosis Engine**: Longitudinal analysis of patient condition
-- **Trend Analysis**: Track symptom severity, medication efficacy
-- **Report Generation**: Clinical summaries and prognosis reports
-
-## 🔧 Tech Stack
-
-- **Framework**: Microsoft AutoGen
-- **LLM**: OpenAI GPT-4o-mini OR Local Llama 3.2 (your choice!)
-- **UI**: Streamlit (Web Interface)
-- **API**: FastAPI
-- **Database**: SQLAlchemy + SQLite
-- **Validation**: Pydantic v2
-
-## 🚀 New Features
-
-### Local LLM Support (Llama 3.2)
-- ✅ Run 100% locally with your own Llama 3.2 model
-- ✅ No API costs, complete privacy
-- ✅ Works with LM Studio, Ollama, or llama.cpp
-- 📖 See [LOCAL_LLM_SETUP.md](LOCAL_LLM_SETUP.md) for setup guide
-
-### Streamlit Web Interface
-- ✅ Beautiful web UI for easy interaction
-- ✅ Multi-agent analysis with real-time output
-- ✅ Single agent consultations
-- ✅ Pre-filled sample cases for testing
-- 📖 See [STREAMLIT_GUIDE.md](STREAMLIT_GUIDE.md) for usage
-
-### Testing
-- ✅ Comprehensive test suite with pytest
-- ✅ 16 passing tests for models and configuration
-- 🧪 Run: `pytest tests/ -v`
-
-## 📚 Documentation
-
-- **[STREAMLIT_GUIDE.md](STREAMLIT_GUIDE.md)** - Web UI setup and usage
-- **[LOCAL_LLM_SETUP.md](LOCAL_LLM_SETUP.md)** - Local Llama 3.2 configuration
-- **[test_local_llm.py](test_local_llm.py)** - Quick test script for local LLM
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LLM_PROVIDER` | `local` | LLM backend: "openai" or "local" |
+| `OPENAI_API_KEY` | -- | OpenAI API key |
+| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |
+| `LOCAL_LLM_BASE_URL` | `http://localhost:11434/v1` | Ollama/LM Studio endpoint |
+| `LOCAL_LLM_MODEL` | `phi3:mini-128k` | Local model name |
+| `LOG_LEVEL` | `INFO` | Logging verbosity |
 
 ---
+
 *Built with AI-powered multi-agent collaboration*

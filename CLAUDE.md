@@ -7,7 +7,7 @@ Multi-agent AI system for neurology patient tracking and prognosis, built on Mic
 - **Framework**: Microsoft AutoGen (multi-agent orchestration)
 - **Models**: Pydantic v2 (data validation)
 - **UI**: Streamlit (web interface)
-- **LLM**: OpenAI GPT-4o-mini or local Llama 3.2 (via LM Studio/Ollama)
+- **LLM**: OpenAI GPT-4o-mini or local models via Ollama (Phi-3, Llama 3.2)
 - **Logging**: HIPAA-compliant audit logging with SHA256 PHI hashing
 - **Telemetry**: LLM token/cost tracking per session
 - **Backend**: FastAPI + SQLAlchemy 2.0 (planned)
@@ -29,7 +29,7 @@ User (CLI/Streamlit) -> Orchestrator (NeuroCrew) -> RoundRobinGroupChat -> 6 Age
 | Report Generator | Clinical documentation | get_report_template(), format_trend_summary() |
 
 ### Key Files
-- `app.py` - Streamlit web UI
+- `app.py` - Streamlit web UI (professional clinical dark theme with custom CSS)
 - `src/main.py` - CLI entry point
 - `src/orchestrator.py` - NeuroCrew orchestrator + RoundRobinGroupChat
 - `src/agents/base_agent.py` - BaseNeurologistAgent (shared interface)
@@ -38,7 +38,12 @@ User (CLI/Streamlit) -> Orchestrator (NeuroCrew) -> RoundRobinGroupChat -> 6 Age
 - `src/logging/audit_logger.py` - HIPAA audit logging (singleton)
 - `src/logging/telemetry.py` - LLM runtime telemetry (singleton)
 - `tests/` - pytest test suite
-- `data/test_patients.json` - Sample patient records for testing/demo
+- `data/test_patients.json` - 12 sample patient records for testing/demo
+
+### Documentation (docs/)
+- `architecture.html` - Interactive architecture visualization (animated)
+- `architecture-onepage.html` - Compact one-page landscape architecture
+- `code-review.html` - Full code review report with findings
 
 ## Commands
 ```bash
@@ -60,8 +65,8 @@ Set via `.env` file or environment variables:
 - `LLM_PROVIDER`: "openai" or "local" (default: "local")
 - `OPENAI_API_KEY`: API key (when using openai)
 - `OPENAI_MODEL`: Model name (default: "gpt-4o-mini")
-- `LOCAL_LLM_BASE_URL`: Local endpoint (default: "http://localhost:1234/v1")
-- `LOCAL_LLM_MODEL`: Local model (default: "llama-3.2-3b-instruct")
+- `LOCAL_LLM_BASE_URL`: Local endpoint (default: "http://localhost:11434/v1")
+- `LOCAL_LLM_MODEL`: Local model (default: "phi3:mini-128k")
 - `LOG_LEVEL`: Logging verbosity (default: "INFO")
 
 ## Conventions

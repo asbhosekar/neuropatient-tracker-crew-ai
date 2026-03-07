@@ -3,581 +3,1199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuro Patient Tracker - Architecture</title>
+    <title>Neuro Patient Tracker - System Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ── Reset & Base ── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep: #060b14;
+            --bg-primary: #0a1224;
+            --bg-card: #0f1a2e;
+            --bg-card-hover: #142240;
+            --border: #1e3050;
+            --border-hover: #2a5a8f;
+            --text-primary: #e0ecf5;
+            --text-secondary: #7a9ec5;
+            --text-muted: #4a6a8a;
+            --accent-blue: #3b82f6;
+            --accent-blue-glow: rgba(59, 130, 246, 0.15);
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        /* ── Animated background grid ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        h1 {
+        /* ── Floating orbs ── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+        .orb-1 { width: 500px; height: 500px; background: var(--accent-blue); top: -10%; left: -5%; animation-delay: 0s; }
+        .orb-2 { width: 400px; height: 400px; background: var(--accent-purple); top: 40%; right: -8%; animation-delay: -7s; }
+        .orb-3 { width: 350px; height: 350px; background: var(--accent-cyan); bottom: -5%; left: 30%; animation-delay: -14s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* ── Container ── */
+        .page { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+        /* ── Hero ── */
+        .hero {
             text-align: center;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 40px;
-            font-size: 1.2em;
-        }
-
-        .architecture {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            margin-top: 30px;
-        }
-
-        .layer {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            border-left: 5px solid #3498db;
-            transition: all 0.3s ease;
-        }
-
-        .layer:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .layer-title {
-            font-size: 1.5em;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .layer-icon {
-            font-size: 1.3em;
-        }
-
-        .components {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .component {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .component:hover {
-            border-color: #3498db;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
-        }
-
-        .component-title {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 1.1em;
-        }
-
-        .component-desc {
-            color: #7f8c8d;
-            font-size: 0.9em;
-            line-height: 1.5;
-        }
-
-        .flow-diagram {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            margin: 30px 0;
-            text-align: center;
-        }
-
-        .flow-item {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            margin: 10px;
-            display: inline-block;
-            border: 2px solid #3498db;
+            padding: 3.5rem 2rem;
+            margin-bottom: 3rem;
             position: relative;
         }
-
-        .flow-item::after {
-            content: '↓';
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
-            color: #3498db;
-        }
-
-        .flow-item:last-child::after {
+        .hero::after {
             content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            background: var(--accent-blue-glow);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 20px;
+            color: var(--accent-blue);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 1.2rem;
+        }
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 0%, #8ab4e8 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.8rem;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            max-width: 650px;
+            margin: 0 auto;
+            font-weight: 300;
         }
 
-        .tech-stack {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin: 2.5rem 0 3rem;
         }
-
-        .tech-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
+        .stat {
             text-align: center;
-            font-weight: bold;
-            transition: all 0.3s ease;
+            padding: 1rem 1.8rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            min-width: 140px;
+            transition: all 0.3s;
+        }
+        .stat:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(59,130,246,0.1);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 0.3rem;
         }
 
-        .tech-item:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .legend {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-        }
-
-        .legend-title {
-            font-weight: bold;
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .legend-item {
+        /* ── Section headers ── */
+        .section-title {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin: 8px 0;
-            color: #856404;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
         }
-
-        .legend-color {
-            width: 30px;
-            height: 20px;
-            border-radius: 5px;
-        }
-
-        .info-box {
-            background: #d1ecf1;
-            border: 2px solid #17a2b8;
+        .section-title .icon {
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .section-title h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .section-title .line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
         }
 
-        .info-box-title {
-            font-weight: bold;
-            color: #0c5460;
-            margin-bottom: 10px;
-            font-size: 1.2em;
+        /* ── Animated flow diagram ── */
+        .flow-section { margin-bottom: 4rem; }
+
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+            padding: 2.5rem 1rem;
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(15,26,46,0.5) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .flow-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, rgba(59,130,246,0.05) 0%, transparent 70%);
         }
 
-        .info-box-content {
-            color: #0c5460;
-            line-height: 1.6;
+        .flow-node {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.2rem 1.8rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            min-width: 150px;
+            text-align: center;
+            transition: all 0.4s;
+            animation: nodeAppear 0.6s ease-out backwards;
+        }
+        .flow-node:nth-child(1)  { animation-delay: 0.1s; }
+        .flow-node:nth-child(3)  { animation-delay: 0.2s; }
+        .flow-node:nth-child(5)  { animation-delay: 0.3s; }
+        .flow-node:nth-child(7)  { animation-delay: 0.4s; }
+        .flow-node:nth-child(9)  { animation-delay: 0.5s; }
+        .flow-node:nth-child(11) { animation-delay: 0.6s; }
+
+        @keyframes nodeAppear {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .components {
-                grid-template-columns: 1fr;
-            }
+        .flow-node:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(59,130,246,0.15);
+        }
+        .flow-node .node-icon {
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.02em;
+        }
+        .flow-node .node-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .flow-node .node-sub {
+            font-size: 0.72rem;
+            color: var(--text-muted);
         }
 
-        .agent-grid {
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            padding: 0 0.3rem;
+            position: relative;
+            z-index: 1;
+        }
+        .flow-arrow svg { width: 40px; height: 20px; }
+        .flow-arrow .arrow-line {
+            stroke: var(--accent-blue);
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+            animation: dashFlow 1.5s linear infinite;
+        }
+        .flow-arrow .arrow-head {
+            fill: var(--accent-blue);
+        }
+        @keyframes dashFlow {
+            to { stroke-dashoffset: -20; }
+        }
+
+        /* ── Agent showcase ── */
+        .agents-section { margin-bottom: 4rem; }
+
+        .agents-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.2rem;
         }
+        @media (max-width: 900px) { .agents-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .agents-grid { grid-template-columns: 1fr; } }
 
         .agent-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 5px solid #e74c3c;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.6rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s;
+            cursor: default;
         }
-
-        .agent-card:nth-child(1) { border-left-color: #e74c3c; }
-        .agent-card:nth-child(2) { border-left-color: #3498db; }
-        .agent-card:nth-child(3) { border-left-color: #2ecc71; }
-        .agent-card:nth-child(4) { border-left-color: #f39c12; }
-        .agent-card:nth-child(5) { border-left-color: #9b59b6; }
-        .agent-card:nth-child(6) { border-left-color: #1abc9c; }
-
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 14px 14px 0 0;
+        }
         .agent-card:hover {
+            border-color: var(--border-hover);
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
         }
 
-        .agent-name {
-            font-weight: bold;
-            font-size: 1.2em;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
+        .agent-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent-red), var(--accent-pink)); }
+        .agent-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+        .agent-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-green), #34d399); }
+        .agent-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-amber), #fbbf24); }
+        .agent-card:nth-child(5)::before { background: linear-gradient(90deg, var(--accent-purple), #a78bfa); }
+        .agent-card:nth-child(6)::before { background: linear-gradient(90deg, var(--accent-cyan), #22d3ee); }
 
-        .agent-role {
-            color: #7f8c8d;
-            font-size: 0.95em;
+        .agent-card .agent-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .agent-card:nth-child(1) .agent-icon { background: rgba(239,68,68,0.12); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.2); }
+        .agent-card:nth-child(2) .agent-icon { background: rgba(59,130,246,0.12); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.2); }
+        .agent-card:nth-child(3) .agent-icon { background: rgba(16,185,129,0.12); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.2); }
+        .agent-card:nth-child(4) .agent-icon { background: rgba(245,158,11,0.12); color: var(--accent-amber); border: 1px solid rgba(245,158,11,0.2); }
+        .agent-card:nth-child(5) .agent-icon { background: rgba(139,92,246,0.12); color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.2); }
+        .agent-card:nth-child(6) .agent-icon { background: rgba(6,182,212,0.12); color: var(--accent-cyan); border: 1px solid rgba(6,182,212,0.2); }
+
+        .agent-card .agent-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+        .agent-card .agent-role {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
             line-height: 1.5;
+        }
+        .agent-card .agent-techniques {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .agent-card .tech-tag {
+            font-size: 0.68rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(59,130,246,0.08);
+            color: var(--text-muted);
+            border: 1px solid rgba(59,130,246,0.12);
+        }
+
+        /* ── Architecture layers ── */
+        .layers-section { margin-bottom: 4rem; }
+
+        .layer {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .layer:hover { border-color: var(--border-hover); }
+
+        .layer-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem 1.5rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .layer-header:hover { background: rgba(59,130,246,0.03); }
+
+        .layer-number {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            background: var(--accent-blue-glow);
+            color: var(--accent-blue);
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .layer-title { font-weight: 600; font-size: 1.05rem; flex: 1; }
+        .layer-toggle {
+            width: 28px; height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: transform 0.3s;
+            font-size: 1rem;
+        }
+        .layer.open .layer-toggle { transform: rotate(180deg); }
+
+        .layer-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            padding: 0 1.5rem;
+        }
+        .layer.open .layer-content {
+            max-height: 800px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .layer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .layer-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            transition: all 0.3s;
+        }
+        .layer-item:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+        }
+        .layer-item h4 {
+            font-size: 0.92rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .layer-item p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .layer-item .file-ref {
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: rgba(59,130,246,0.06);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        /* ── Prompt engineering section ── */
+        .prompt-section { margin-bottom: 4rem; }
+
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .prompt-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.4rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .prompt-card:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(139,92,246,0.1);
+        }
+        .prompt-card .prompt-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            margin: 0 auto 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            background: rgba(139,92,246,0.1);
+            color: var(--accent-purple);
+            border: 1px solid rgba(139,92,246,0.2);
+        }
+        .prompt-card h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .prompt-card p { font-size: 0.78rem; color: var(--text-secondary); }
+
+        /* ── Tech stack ── */
+        .tech-section { margin-bottom: 4rem; }
+
+        .tech-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+        }
+        .tech-pill {
+            padding: 0.6rem 1.4rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            transition: all 0.3s;
+            cursor: default;
+        }
+        .tech-pill:hover {
+            transform: translateY(-2px);
+        }
+        .tech-pill.core    { border-color: rgba(59,130,246,0.3); color: var(--accent-blue); }
+        .tech-pill.core:hover { background: rgba(59,130,246,0.08); box-shadow: 0 4px 16px rgba(59,130,246,0.1); }
+        .tech-pill.ai      { border-color: rgba(139,92,246,0.3); color: var(--accent-purple); }
+        .tech-pill.ai:hover { background: rgba(139,92,246,0.08); box-shadow: 0 4px 16px rgba(139,92,246,0.1); }
+        .tech-pill.infra   { border-color: rgba(16,185,129,0.3); color: var(--accent-green); }
+        .tech-pill.infra:hover { background: rgba(16,185,129,0.08); box-shadow: 0 4px 16px rgba(16,185,129,0.1); }
+        .tech-pill.data    { border-color: rgba(245,158,11,0.3); color: var(--accent-amber); }
+        .tech-pill.data:hover { background: rgba(245,158,11,0.08); box-shadow: 0 4px 16px rgba(245,158,11,0.1); }
+
+        /* ── Conditions ── */
+        .conditions-section { margin-bottom: 4rem; }
+
+        .conditions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.8rem;
+        }
+        .condition-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .condition-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .condition-card .cond-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; }
+        .condition-card .cond-desc { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* ── Project structure ── */
+        .structure-section { margin-bottom: 4rem; }
+
+        .tree {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 2rem;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+        .tree .dir  { color: var(--accent-blue); font-weight: 600; }
+        .tree .file { color: var(--text-secondary); }
+        .tree .desc { color: var(--text-muted); font-style: italic; font-family: 'Inter', sans-serif; font-size: 0.75rem; }
+
+        /* ── Config table ── */
+        .config-section { margin-bottom: 4rem; }
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .config-table th {
+            background: rgba(59,130,246,0.08);
+            padding: 0.8rem 1.2rem;
+            text-align: left;
+            font-size: 0.78rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+        .config-table td {
+            padding: 0.7rem 1.2rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .config-table tr:last-child td { border-bottom: none; }
+        .config-table tr:hover td { background: rgba(59,130,246,0.02); }
+        .config-table code {
+            background: rgba(59,130,246,0.06);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+            color: var(--accent-cyan);
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .footer a { color: var(--accent-blue); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* ── Animations ── */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .page { padding: 1rem; }
+            .hero h1 { font-size: 2rem; }
+            .stats-bar { gap: 0.8rem; }
+            .stat { min-width: 110px; padding: 0.8rem; }
+            .agents-grid { grid-template-columns: 1fr; }
+            .flow-container { flex-direction: column; gap: 0.5rem; }
+            .flow-arrow svg { transform: rotate(90deg); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧠 Neuro Patient Tracker</h1>
-        <p class="subtitle">Multi-Agent AI System Architecture</p>
 
-        <!-- Overview -->
-        <div class="info-box">
-            <div class="info-box-title">📋 System Overview</div>
-            <div class="info-box-content">
-                The Neuro Patient Tracker is an AI-powered system that uses multiple specialized agents
-                to provide comprehensive neurological patient analysis, prognosis prediction, and treatment
-                recommendations. The system supports both cloud-based (OpenAI) and local (Llama 3.2) LLMs.
-            </div>
-        </div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
 
-        <!-- Data Flow -->
-        <div class="flow-diagram">
-            <h2 style="margin-bottom: 30px; color: #2c3e50;">📊 Data Flow</h2>
-            <div>
-                <div class="flow-item">👤 User Interface<br><small>(Streamlit / CLI)</small></div>
-                <div class="flow-item">🎯 Orchestrator<br><small>(NeuroCrew)</small></div>
-                <div class="flow-item">🤖 AI Agents<br><small>(6 Specialists)</small></div>
-                <div class="flow-item">🧠 LLM<br><small>(OpenAI / Local Llama)</small></div>
-                <div class="flow-item">📝 Response<br><small>(Analysis & Reports)</small></div>
-            </div>
-        </div>
+<div class="page">
 
-        <!-- Architecture Layers -->
-        <div class="architecture">
-
-            <!-- Layer 1: Presentation -->
-            <div class="layer">
-                <div class="layer-title">
-                    <span class="layer-icon">🖥️</span>
-                    Layer 1: Presentation Layer
-                </div>
-                <div class="components">
-                    <div class="component">
-                        <div class="component-title">Streamlit Web UI</div>
-                        <div class="component-desc">
-                            Interactive web interface with patient analysis, single agent consultation,
-                            and system information pages. Real-time agent output display.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">CLI Interface</div>
-                        <div class="component-desc">
-                            Command-line interface for running demos, single agent consultations,
-                            and batch processing. Ideal for automation and scripting.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Layer 2: Orchestration -->
-            <div class="layer">
-                <div class="layer-title">
-                    <span class="layer-icon">🎭</span>
-                    Layer 2: Orchestration Layer
-                </div>
-                <div class="components">
-                    <div class="component">
-                        <div class="component-title">NeuroCrew Orchestrator</div>
-                        <div class="component-desc">
-                            Manages multi-agent conversations using AutoGen's RoundRobinGroupChat.
-                            Coordinates agent interactions and manages conversation flow.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">SingleAgentChat</div>
-                        <div class="component-desc">
-                            Handles direct consultations with individual agents for specific queries.
-                            Faster for single-purpose tasks.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">Model Client Factory</div>
-                        <div class="component-desc">
-                            Creates appropriate LLM clients based on configuration.
-                            Supports both OpenAI API and local LLM endpoints.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Layer 3: AI Agents -->
-            <div class="layer">
-                <div class="layer-title">
-                    <span class="layer-icon">🤖</span>
-                    Layer 3: AI Agent Layer
-                </div>
-                <div class="agent-grid">
-                    <div class="agent-card">
-                        <div class="agent-name">👨‍⚕️ Neurologist</div>
-                        <div class="agent-role">
-                            Reviews clinical cases, provides medical assessments,
-                            and identifies key neurological findings.
-                        </div>
-                    </div>
-                    <div class="agent-card">
-                        <div class="agent-name">📊 Prognosis Analyst</div>
-                        <div class="agent-role">
-                            Analyzes patient trends, predicts disease trajectories,
-                            and provides longitudinal assessments.
-                        </div>
-                    </div>
-                    <div class="agent-card">
-                        <div class="agent-name">💊 Treatment Advisor</div>
-                        <div class="agent-role">
-                            Recommends medication adjustments and treatment plans
-                            based on current evidence and patient history.
-                        </div>
-                    </div>
-                    <div class="agent-card">
-                        <div class="agent-name">📄 Report Generator</div>
-                        <div class="agent-role">
-                            Creates comprehensive clinical summaries and prognosis
-                            reports from multi-agent analyses.
-                        </div>
-                    </div>
-                    <div class="agent-card">
-                        <div class="agent-name">✅ QA Validator</div>
-                        <div class="agent-role">
-                            Validates data accuracy, checks medical logic,
-                            and ensures quality of recommendations.
-                        </div>
-                    </div>
-                    <div class="agent-card">
-                        <div class="agent-name">🏗️ Clinical Architect</div>
-                        <div class="agent-role">
-                            Designs data models, ensures HIPAA compliance,
-                            and maintains system architecture.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Layer 4: LLM Integration -->
-            <div class="layer">
-                <div class="layer-title">
-                    <span class="layer-icon">🧠</span>
-                    Layer 4: LLM Integration Layer
-                </div>
-                <div class="components">
-                    <div class="component">
-                        <div class="component-title">OpenAI API Client</div>
-                        <div class="component-desc">
-                            Cloud-based GPT-4o-mini integration for high-quality responses
-                            with large context windows (128K tokens).
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">Local LLM Client</div>
-                        <div class="component-desc">
-                            Connects to local Llama 3.2 via OpenAI-compatible API.
-                            Supports LM Studio, Ollama, and llama.cpp.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">AutoGen Framework</div>
-                        <div class="component-desc">
-                            Microsoft's multi-agent conversation framework.
-                            Handles agent coordination and message routing.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Layer 5: Data & Models -->
-            <div class="layer">
-                <div class="layer-title">
-                    <span class="layer-icon">💾</span>
-                    Layer 5: Data & Models Layer
-                </div>
-                <div class="components">
-                    <div class="component">
-                        <div class="component-title">Pydantic Models</div>
-                        <div class="component-desc">
-                            Type-safe data models for Patient, Visit, Medication,
-                            and Prognosis with built-in validation.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">SQLAlchemy ORM</div>
-                        <div class="component-desc">
-                            Database abstraction layer for patient records,
-                            visit history, and clinical data storage.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">SQLite Database</div>
-                        <div class="component-desc">
-                            Lightweight embedded database for local data storage.
-                            Can be swapped for PostgreSQL in production.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Layer 6: Infrastructure -->
-            <div class="layer">
-                <div class="layer-title">
-                    <span class="layer-icon">⚙️</span>
-                    Layer 6: Infrastructure Layer
-                </div>
-                <div class="components">
-                    <div class="component">
-                        <div class="component-title">HIPAA Audit Logger</div>
-                        <div class="component-desc">
-                            Comprehensive audit logging for PHI access, agent actions,
-                            and system events. Ensures compliance and traceability.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">LLM Telemetry</div>
-                        <div class="component-desc">
-                            Tracks LLM usage, costs, token counts, and performance metrics.
-                            Generates session cost reports.
-                        </div>
-                    </div>
-                    <div class="component">
-                        <div class="component-title">Configuration System</div>
-                        <div class="component-desc">
-                            Environment-based configuration using .env files.
-                            Supports multiple LLM providers and deployment environments.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Tech Stack -->
-        <div style="margin-top: 40px;">
-            <h2 style="color: #2c3e50; margin-bottom: 20px;">🔧 Technology Stack</h2>
-            <div class="tech-stack">
-                <div class="tech-item">Python 3.10+</div>
-                <div class="tech-item">AutoGen 0.4+</div>
-                <div class="tech-item">Streamlit</div>
-                <div class="tech-item">FastAPI</div>
-                <div class="tech-item">Pydantic v2</div>
-                <div class="tech-item">SQLAlchemy</div>
-                <div class="tech-item">OpenAI API</div>
-                <div class="tech-item">Llama 3.2</div>
-                <div class="tech-item">SQLite</div>
-                <div class="tech-item">pytest</div>
-            </div>
-        </div>
-
-        <!-- Legend -->
-        <div class="legend">
-            <div class="legend-title">📖 Legend</div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #3498db;"></div>
-                <span>Core System Component</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #e74c3c;"></div>
-                <span>AI Agent / Intelligence</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #2ecc71;"></div>
-                <span>Data Storage / Persistence</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #f39c12;"></div>
-                <span>External Service / API</span>
-            </div>
-        </div>
-
-        <!-- Key Features -->
-        <div class="info-box" style="background: #d4edda; border-color: #28a745; margin-top: 30px;">
-            <div class="info-box-title" style="color: #155724;">✨ Key Features</div>
-            <div class="info-box-content" style="color: #155724;">
-                <ul style="margin-left: 20px; line-height: 2;">
-                    <li><strong>Multi-Agent Collaboration:</strong> 6 specialized AI agents work together</li>
-                    <li><strong>Dual LLM Support:</strong> Switch between OpenAI and local Llama 3.2</li>
-                    <li><strong>HIPAA Compliance:</strong> Comprehensive audit logging and data security</li>
-                    <li><strong>Interactive UI:</strong> Modern Streamlit web interface</li>
-                    <li><strong>Cost Tracking:</strong> Real-time LLM usage and cost monitoring</li>
-                    <li><strong>Extensible:</strong> Easy to add new agents or integrate additional services</li>
-                </ul>
-            </div>
-        </div>
-
+    <!-- ── Hero ── -->
+    <div class="hero fade-in">
+        <div class="hero-badge">System Architecture v0.1.0</div>
+        <h1>Neuro Patient Tracker</h1>
+        <p>Multi-agent AI clinical decision support system for neurology -- powered by Microsoft AutoGen, 6 specialized AI agents, and advanced prompt engineering</p>
     </div>
 
-    <script>
-        // Add click handlers for interactive elements
-        document.querySelectorAll('.component, .agent-card').forEach(item => {
-            item.addEventListener('click', function() {
-                const title = this.querySelector('.component-title, .agent-name').textContent;
-                const desc = this.querySelector('.component-desc, .agent-role').textContent;
+    <!-- ── Stats ── -->
+    <div class="stats-bar fade-in">
+        <div class="stat">
+            <div class="stat-value">6</div>
+            <div class="stat-label">AI Agents</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Conditions</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Test Patients</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">2</div>
+            <div class="stat-label">LLM Providers</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Prompt Techniques</div>
+        </div>
+    </div>
 
-                // Create a simple modal effect
-                this.style.backgroundColor = '#e3f2fd';
-                setTimeout(() => {
-                    this.style.backgroundColor = '';
-                }, 300);
-            });
-        });
+    <!-- ── Data Flow ── -->
+    <div class="flow-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(6,182,212,0.12);color:var(--accent-cyan);border:1px solid rgba(6,182,212,0.2);">DF</div>
+            <h2>Data Flow Pipeline</h2>
+            <div class="line"></div>
+        </div>
+        <div class="flow-container">
+            <div class="flow-node">
+                <div class="node-icon" style="background:rgba(59,130,246,0.12);color:var(--accent-blue);border:1px solid rgba(59,130,246,0.2);">UI</div>
+                <div class="node-label">User Interface</div>
+                <div class="node-sub">Streamlit / CLI</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 40 20"><line x1="0" y1="10" x2="30" y2="10" class="arrow-line"/><polygon points="30,5 40,10 30,15" class="arrow-head"/></svg></div>
+            <div class="flow-node">
+                <div class="node-icon" style="background:rgba(139,92,246,0.12);color:var(--accent-purple);border:1px solid rgba(139,92,246,0.2);">OC</div>
+                <div class="node-label">Orchestrator</div>
+                <div class="node-sub">NeuroCrew</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 40 20"><line x1="0" y1="10" x2="30" y2="10" class="arrow-line"/><polygon points="30,5 40,10 30,15" class="arrow-head"/></svg></div>
+            <div class="flow-node">
+                <div class="node-icon" style="background:rgba(16,185,129,0.12);color:var(--accent-green);border:1px solid rgba(16,185,129,0.2);">GC</div>
+                <div class="node-label">Group Chat</div>
+                <div class="node-sub">RoundRobin</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 40 20"><line x1="0" y1="10" x2="30" y2="10" class="arrow-line"/><polygon points="30,5 40,10 30,15" class="arrow-head"/></svg></div>
+            <div class="flow-node">
+                <div class="node-icon" style="background:rgba(239,68,68,0.12);color:var(--accent-red);border:1px solid rgba(239,68,68,0.2);">6x</div>
+                <div class="node-label">AI Agents</div>
+                <div class="node-sub">Specialists</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 40 20"><line x1="0" y1="10" x2="30" y2="10" class="arrow-line"/><polygon points="30,5 40,10 30,15" class="arrow-head"/></svg></div>
+            <div class="flow-node">
+                <div class="node-icon" style="background:rgba(245,158,11,0.12);color:var(--accent-amber);border:1px solid rgba(245,158,11,0.2);">LM</div>
+                <div class="node-label">LLM Engine</div>
+                <div class="node-sub">GPT-4o / Phi-3</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 40 20"><line x1="0" y1="10" x2="30" y2="10" class="arrow-line"/><polygon points="30,5 40,10 30,15" class="arrow-head"/></svg></div>
+            <div class="flow-node">
+                <div class="node-icon" style="background:rgba(6,182,212,0.12);color:var(--accent-cyan);border:1px solid rgba(6,182,212,0.2);">RP</div>
+                <div class="node-label">Clinical Report</div>
+                <div class="node-sub">Analysis Output</div>
+            </div>
+        </div>
+    </div>
 
-        // Add hover effects
-        document.querySelectorAll('.tech-item').forEach(item => {
-            item.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.1) rotate(2deg)';
-            });
-            item.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1) rotate(0deg)';
-            });
-        });
-    </script>
+    <!-- ── AI Agents ── -->
+    <div class="agents-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(239,68,68,0.12);color:var(--accent-red);border:1px solid rgba(239,68,68,0.2);">AG</div>
+            <h2>Specialized Clinical Agents</h2>
+            <div class="line"></div>
+        </div>
+        <div class="agents-grid">
+            <div class="agent-card">
+                <div class="agent-icon">DX</div>
+                <div class="agent-name">Neurologist</div>
+                <div class="agent-role">Board-certified expert with 20+ years experience. 5-step clinical reasoning, differential diagnosis, red flag screening, workup recommendations.</div>
+                <div class="agent-techniques">
+                    <span class="tech-tag">Chain-of-Thought</span>
+                    <span class="tech-tag">Few-Shot</span>
+                    <span class="tech-tag">Self-Review</span>
+                    <span class="tech-tag">Confidence</span>
+                </div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-icon">PA</div>
+                <div class="agent-name">Prognosis Analyst</div>
+                <div class="agent-role">Senior data analyst for disease trajectory modeling. Trend calculation, condition-specific benchmarks (MMSE, UPDRS, EDSS), confidence scoring.</div>
+                <div class="agent-techniques">
+                    <span class="tech-tag">Chain-of-Thought</span>
+                    <span class="tech-tag">Benchmarks</span>
+                    <span class="tech-tag">Self-Critique</span>
+                    <span class="tech-tag">0.0-1.0 Score</span>
+                </div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-icon">TX</div>
+                <div class="agent-name">Treatment Advisor</div>
+                <div class="agent-role">Clinical pharmacology specialist. 5-step decision process, comprehensive medication knowledge base, drug interaction screening, dose titration.</div>
+                <div class="agent-techniques">
+                    <span class="tech-tag">Chain-of-Thought</span>
+                    <span class="tech-tag">Drug Database</span>
+                    <span class="tech-tag">Few-Shot</span>
+                    <span class="tech-tag">Guardrails</span>
+                </div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-icon">RP</div>
+                <div class="agent-name">Report Generator</div>
+                <div class="agent-role">Clinical documentation specialist. Integrated synthesis from all agents, executive summary, urgent findings, follow-up planning, writing guidelines.</div>
+                <div class="agent-techniques">
+                    <span class="tech-tag">Template</span>
+                    <span class="tech-tag">Few-Shot</span>
+                    <span class="tech-tag">Integration</span>
+                    <span class="tech-tag">Style Guide</span>
+                </div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-icon">QA</div>
+                <div class="agent-name">QA Validator</div>
+                <div class="agent-role">6-step validation process. Reference tables for 8 assessment scales, vital sign ranges, score change thresholds, anomaly detection.</div>
+                <div class="agent-techniques">
+                    <span class="tech-tag">6-Step Process</span>
+                    <span class="tech-tag">Ref Tables</span>
+                    <span class="tech-tag">Few-Shot</span>
+                    <span class="tech-tag">Quality Score</span>
+                </div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-icon">CA</div>
+                <div class="agent-name">Clinical Architect</div>
+                <div class="agent-role">HIPAA compliance and data model review. 4-step data review, 18-identifier audit process, data architecture standards enforcement.</div>
+                <div class="agent-techniques">
+                    <span class="tech-tag">Chain-of-Thought</span>
+                    <span class="tech-tag">HIPAA Audit</span>
+                    <span class="tech-tag">Few-Shot</span>
+                    <span class="tech-tag">Template</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Architecture Layers ── -->
+    <div class="layers-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(59,130,246,0.12);color:var(--accent-blue);border:1px solid rgba(59,130,246,0.2);">AR</div>
+            <h2>Architecture Layers</h2>
+            <div class="line"></div>
+        </div>
+
+        <div class="layer open" onclick="this.classList.toggle('open')">
+            <div class="layer-header">
+                <div class="layer-number">01</div>
+                <div class="layer-title">Presentation Layer</div>
+                <div class="layer-toggle">&#9660;</div>
+            </div>
+            <div class="layer-content">
+                <div class="layer-grid">
+                    <div class="layer-item">
+                        <h4>Streamlit Web UI</h4>
+                        <p>Professional clinical dark theme with custom CSS. Patient dropdown selector, agent response panels, real-time streaming output, event logging.</p>
+                        <span class="file-ref">app.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>CLI Interface</h4>
+                        <p>Command-line interface for demos, single agent consultations, and batch processing. Ideal for automation and scripting workflows.</p>
+                        <span class="file-ref">src/main.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Architecture Docs</h4>
+                        <p>Interactive HTML architecture visualization, prompt engineering documentation, and Claude/LLM integration guide.</p>
+                        <span class="file-ref">docs/</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layer" onclick="this.classList.toggle('open')">
+            <div class="layer-header">
+                <div class="layer-number">02</div>
+                <div class="layer-title">Orchestration Layer</div>
+                <div class="layer-toggle">&#9660;</div>
+            </div>
+            <div class="layer-content">
+                <div class="layer-grid">
+                    <div class="layer-item">
+                        <h4>NeuroCrew Orchestrator</h4>
+                        <p>Manages multi-agent conversations via AutoGen RoundRobinGroupChat. MaxMessageTermination(12) + TextMentionTermination("TERMINATE").</p>
+                        <span class="file-ref">src/orchestrator.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>SingleAgentChat</h4>
+                        <p>Direct consultations with individual agents. Faster for single-purpose tasks. 3-message termination limit.</p>
+                        <span class="file-ref">src/orchestrator.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Model Client Factory</h4>
+                        <p>Creates OpenAIChatCompletionClient based on config. Supports OpenAI API and local Ollama/LM Studio via OpenAI-compatible endpoint.</p>
+                        <span class="file-ref">src/orchestrator.py:31</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layer" onclick="this.classList.toggle('open')">
+            <div class="layer-header">
+                <div class="layer-number">03</div>
+                <div class="layer-title">AI Agent Layer</div>
+                <div class="layer-toggle">&#9660;</div>
+            </div>
+            <div class="layer-content">
+                <div class="layer-grid">
+                    <div class="layer-item">
+                        <h4>BaseNeurologistAgent</h4>
+                        <p>Abstract base class defining shared interface: system_message, tools, agent_type. All 6 agents extend this contract.</p>
+                        <span class="file-ref">src/agents/base_agent.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Agent Prompts</h4>
+                        <p>Each agent has a detailed system prompt with CoT reasoning, few-shot examples, structured output templates, self-review checklists, and guardrails.</p>
+                        <span class="file-ref">src/agents/*.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Helper Methods</h4>
+                        <p>Clinically accurate reference methods: get_red_flags(), calculate_trend(), validate_assessment_score(), get_first_line_treatments(), etc.</p>
+                        <span class="file-ref">src/agents/*.py</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layer" onclick="this.classList.toggle('open')">
+            <div class="layer-header">
+                <div class="layer-number">04</div>
+                <div class="layer-title">Data & Validation Layer</div>
+                <div class="layer-toggle">&#9660;</div>
+            </div>
+            <div class="layer-content">
+                <div class="layer-grid">
+                    <div class="layer-item">
+                        <h4>Pydantic v2 Models</h4>
+                        <p>Type-safe schemas: Patient, Visit, VitalSigns, NeurologicalAssessment, Medication, PrognosisAnalysis with strict field validation.</p>
+                        <span class="file-ref">src/models/schemas.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Enum Definitions</h4>
+                        <p>Gender, NeurologicalCondition (7 types), PrognosisTrend, SeverityLevel. Ensures categorical data consistency across the system.</p>
+                        <span class="file-ref">src/models/schemas.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Test Patient Data</h4>
+                        <p>12 diverse patient records covering all 7 conditions with full visit history, vitals, assessments, medications, and diagnosis notes.</p>
+                        <span class="file-ref">data/test_patients.json</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layer" onclick="this.classList.toggle('open')">
+            <div class="layer-header">
+                <div class="layer-number">05</div>
+                <div class="layer-title">Infrastructure Layer</div>
+                <div class="layer-toggle">&#9660;</div>
+            </div>
+            <div class="layer-content">
+                <div class="layer-grid">
+                    <div class="layer-item">
+                        <h4>HIPAA Audit Logger</h4>
+                        <p>PHI hashing via SHA256, separate log streams (audit, PHI access, agents), 365-day audit / 7-year PHI retention, JSON structured format.</p>
+                        <span class="file-ref">src/logging/audit_logger.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>LLM Telemetry</h4>
+                        <p>Token counting, cost estimation per model, session metrics, per-agent breakdowns, JSONL event log, human-readable cost reports.</p>
+                        <span class="file-ref">src/logging/telemetry.py</span>
+                    </div>
+                    <div class="layer-item">
+                        <h4>Configuration</h4>
+                        <p>Environment-based config via .env files. Supports LLM provider switching, model selection, log levels, and database URLs.</p>
+                        <span class="file-ref">src/config/settings.py</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Prompt Engineering ── -->
+    <div class="prompt-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(139,92,246,0.12);color:var(--accent-purple);border:1px solid rgba(139,92,246,0.2);">PE</div>
+            <h2>Prompt Engineering Techniques</h2>
+            <div class="line"></div>
+        </div>
+        <div class="prompt-grid">
+            <div class="prompt-card">
+                <div class="prompt-icon">CoT</div>
+                <h4>Chain-of-Thought</h4>
+                <p>Numbered step-by-step reasoning process unique to each agent's specialty</p>
+            </div>
+            <div class="prompt-card">
+                <div class="prompt-icon">FS</div>
+                <h4>Few-Shot Examples</h4>
+                <p>Complete input/output examples with realistic clinical data in every prompt</p>
+            </div>
+            <div class="prompt-card">
+                <div class="prompt-icon">SO</div>
+                <h4>Structured Output</h4>
+                <p>Named templates: CLINICAL ASSESSMENT, PROGNOSIS ANALYSIS, VALIDATION REPORT</p>
+            </div>
+            <div class="prompt-card">
+                <div class="prompt-icon">SR</div>
+                <h4>Self-Review</h4>
+                <p>Verification checklists agents must complete before submitting responses</p>
+            </div>
+            <div class="prompt-card">
+                <div class="prompt-icon">CC</div>
+                <h4>Confidence Calibration</h4>
+                <p>Required confidence levels -- High/Moderate/Low or 0.0-1.0 numeric scores</p>
+            </div>
+            <div class="prompt-card">
+                <div class="prompt-icon">RG</div>
+                <h4>Reference Grounding</h4>
+                <p>Score ranges, clinical benchmarks, dosage tables embedded in prompts</p>
+            </div>
+            <div class="prompt-card">
+                <div class="prompt-icon">GR</div>
+                <h4>Guardrails</h4>
+                <p>Critical Rules sections with explicit safety boundaries and prohibitions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tech Stack ── -->
+    <div class="tech-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(16,185,129,0.12);color:var(--accent-green);border:1px solid rgba(16,185,129,0.2);">TS</div>
+            <h2>Technology Stack</h2>
+            <div class="line"></div>
+        </div>
+        <div class="tech-grid">
+            <span class="tech-pill core">Python 3.12</span>
+            <span class="tech-pill ai">AutoGen 0.4+</span>
+            <span class="tech-pill core">Streamlit</span>
+            <span class="tech-pill data">Pydantic v2</span>
+            <span class="tech-pill ai">OpenAI API</span>
+            <span class="tech-pill ai">Ollama / Phi-3</span>
+            <span class="tech-pill infra">HIPAA Logging</span>
+            <span class="tech-pill data">SQLite</span>
+            <span class="tech-pill infra">pytest</span>
+            <span class="tech-pill core">FastAPI (planned)</span>
+            <span class="tech-pill data">SQLAlchemy 2.0</span>
+            <span class="tech-pill infra">nest_asyncio</span>
+        </div>
+    </div>
+
+    <!-- ── Supported Conditions ── -->
+    <div class="conditions-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(245,158,11,0.12);color:var(--accent-amber);border:1px solid rgba(245,158,11,0.2);">NC</div>
+            <h2>Supported Neurological Conditions</h2>
+            <div class="line"></div>
+        </div>
+        <div class="conditions-grid">
+            <div class="condition-card">
+                <div class="cond-name">Epilepsy</div>
+                <div class="cond-desc">Seizure tracking, AED management</div>
+            </div>
+            <div class="condition-card">
+                <div class="cond-name">Migraine</div>
+                <div class="cond-desc">Frequency, triggers, prophylaxis</div>
+            </div>
+            <div class="condition-card">
+                <div class="cond-name">Parkinson's</div>
+                <div class="cond-desc">UPDRS, motor fluctuations, DBS</div>
+            </div>
+            <div class="condition-card">
+                <div class="cond-name">Multiple Sclerosis</div>
+                <div class="cond-desc">EDSS, relapse tracking, DMTs</div>
+            </div>
+            <div class="condition-card">
+                <div class="cond-name">Alzheimer's</div>
+                <div class="cond-desc">MMSE/MoCA decline, cognition</div>
+            </div>
+            <div class="condition-card">
+                <div class="cond-name">Stroke</div>
+                <div class="cond-desc">NIHSS, recovery trajectory</div>
+            </div>
+            <div class="condition-card">
+                <div class="cond-name">Neuropathy</div>
+                <div class="cond-desc">NCS/EMG, pain management</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Project Structure ── -->
+    <div class="structure-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(236,72,153,0.12);color:var(--accent-pink);border:1px solid rgba(236,72,153,0.2);">FS</div>
+            <h2>Project Structure</h2>
+            <div class="line"></div>
+        </div>
+        <div class="tree">
+<span class="dir">neuro-patient-tracker/</span>
+    <span class="file">app.py</span>                          <span class="desc">-- Streamlit web UI (clinical dark theme)</span>
+    <span class="file">pyproject.toml</span>                   <span class="desc">-- Dependencies and project config</span>
+    <span class="file">.env</span>                             <span class="desc">-- LLM provider and environment config</span>
+    <span class="dir">src/</span>
+        <span class="file">main.py</span>                      <span class="desc">-- CLI entry point</span>
+        <span class="file">orchestrator.py</span>              <span class="desc">-- NeuroCrew + SingleAgentChat</span>
+        <span class="dir">agents/</span>
+            <span class="file">base_agent.py</span>            <span class="desc">-- BaseNeurologistAgent (abstract)</span>
+            <span class="file">neurologist.py</span>           <span class="desc">-- Clinical expert (5-step CoT)</span>
+            <span class="file">prognosis_analyst.py</span>     <span class="desc">-- Trend analysis (benchmarks)</span>
+            <span class="file">treatment_advisor.py</span>     <span class="desc">-- Medication planning (drug DB)</span>
+            <span class="file">qa_validator.py</span>          <span class="desc">-- Data quality (6-step validation)</span>
+            <span class="file">report_generator.py</span>      <span class="desc">-- Clinical documentation</span>
+            <span class="file">clinical_architect.py</span>    <span class="desc">-- HIPAA compliance</span>
+        <span class="dir">models/</span>
+            <span class="file">schemas.py</span>               <span class="desc">-- Pydantic v2 data models</span>
+        <span class="dir">config/</span>
+            <span class="file">settings.py</span>              <span class="desc">-- Environment-based config</span>
+        <span class="dir">logging/</span>
+            <span class="file">audit_logger.py</span>          <span class="desc">-- HIPAA audit (SHA256 hashing)</span>
+            <span class="file">telemetry.py</span>             <span class="desc">-- LLM token/cost tracking</span>
+    <span class="dir">data/</span>
+        <span class="file">test_patients.json</span>           <span class="desc">-- 12 test patient records</span>
+    <span class="dir">tests/</span>
+        <span class="file">test_schemas.py</span>              <span class="desc">-- Pydantic model tests</span>
+        <span class="file">test_config.py</span>               <span class="desc">-- Config validation tests</span>
+    <span class="dir">docs/</span>
+        <span class="file">architecture.html</span>            <span class="desc">-- This file</span>
+        <span class="file">prompt-uplifting.md</span>          <span class="desc">-- Prompt engineering docs</span>
+    <span class="dir">logs/</span>                             <span class="desc">-- app.log, audit.log, agents.log, phi_access.log</span>
+        </div>
+    </div>
+
+    <!-- ── Config Reference ── -->
+    <div class="config-section fade-in">
+        <div class="section-title">
+            <div class="icon" style="background:rgba(16,185,129,0.12);color:var(--accent-green);border:1px solid rgba(16,185,129,0.2);">CF</div>
+            <h2>Configuration Reference</h2>
+            <div class="line"></div>
+        </div>
+        <table class="config-table">
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Default</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>LLM_PROVIDER</code></td><td><code>local</code></td><td>LLM backend: "openai" or "local"</td></tr>
+                <tr><td><code>OPENAI_API_KEY</code></td><td>--</td><td>OpenAI API key (when provider is openai)</td></tr>
+                <tr><td><code>OPENAI_MODEL</code></td><td><code>gpt-4o-mini</code></td><td>OpenAI model name</td></tr>
+                <tr><td><code>LOCAL_LLM_BASE_URL</code></td><td><code>http://localhost:11434/v1</code></td><td>Local LLM endpoint (Ollama / LM Studio)</td></tr>
+                <tr><td><code>LOCAL_LLM_MODEL</code></td><td><code>phi3:mini-128k</code></td><td>Local model name</td></tr>
+                <tr><td><code>LOG_LEVEL</code></td><td><code>INFO</code></td><td>Logging verbosity</td></tr>
+                <tr><td><code>DATABASE_URL</code></td><td><code>sqlite:///./neuro_tracker.db</code></td><td>Database connection string</td></tr>
+                <tr><td><code>DEBUG</code></td><td><code>true</code></td><td>Debug mode toggle</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ── Footer ── -->
+    <div class="footer">
+        Neuro Patient Tracker v0.1.0 -- Multi-Agent AI Clinical Decision Support<br>
+        Built with <a href="https://microsoft.github.io/autogen/">Microsoft AutoGen</a> |
+        <a href="https://github.com/asbhosekar/neuropatient-tracker-crew-ai">GitHub Repository</a>
+    </div>
+
+</div>
+
+<script>
+// ── Scroll-triggered fade-in animations ──
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Layer accordion (stop propagation from inner clicks) ──
+document.querySelectorAll('.layer-content').forEach(el => {
+    el.addEventListener('click', e => e.stopPropagation());
+});
+
+// ── Parallax orbs on mouse move ──
+document.addEventListener('mousemove', (e) => {
+    const x = e.clientX / window.innerWidth;
+    const y = e.clientY / window.innerHeight;
+    document.querySelectorAll('.orb').forEach((orb, i) => {
+        const speed = (i + 1) * 15;
+        orb.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+    });
+});
+
+// ── Stat counter animation ──
+function animateCounters() {
+    document.querySelectorAll('.stat-value').forEach(el => {
+        const target = parseInt(el.textContent);
+        if (isNaN(target)) return;
+        let current = 0;
+        const increment = Math.max(1, Math.floor(target / 30));
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = current;
+        }, 40);
+    });
+}
+
+// Run counter animation when stats become visible
+const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateCounters();
+            statsObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.5 });
+
+const statsBar = document.querySelector('.stats-bar');
+if (statsBar) statsObserver.observe(statsBar);
+</script>
+
 </body>
 </html>

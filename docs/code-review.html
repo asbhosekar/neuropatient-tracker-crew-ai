@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro Patient Tracker - Code Review Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep: #060b14;
+            --bg-primary: #0a1224;
+            --bg-card: #0f1a2e;
+            --bg-card-hover: #142240;
+            --border: #1e3050;
+            --border-hover: #2a5a8f;
+            --text-primary: #e0ecf5;
+            --text-secondary: #7a9ec5;
+            --text-muted: #4a6a8a;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 20px;
+            color: var(--accent-red);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff 0%, #8ab4e8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .hero p { color: var(--text-secondary); font-size: 1rem; }
+        .hero .date { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; }
+
+        /* ── Score gauge ── */
+        .score-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        .score-ring {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+        .score-ring svg { width: 160px; height: 160px; transform: rotate(-90deg); }
+        .score-ring .track { fill: none; stroke: var(--border); stroke-width: 10; }
+        .score-ring .fill { fill: none; stroke-width: 10; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 154; transition: stroke-dashoffset 1.5s ease-out; }
+        .score-ring .score-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .score-ring .score-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-amber); }
+        .score-ring .score-max { font-size: 0.85rem; color: var(--text-muted); }
+
+        .score-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .score-bar-track {
+            width: 160px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+        }
+        .score-item-label { font-size: 0.8rem; color: var(--text-secondary); min-width: 130px; }
+        .score-item-val { font-size: 0.8rem; font-weight: 600; min-width: 30px; text-align: right; }
+
+        /* ── Section headers ── */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin: 2.5rem 0 1.5rem;
+        }
+        .section-title .icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.78rem;
+            flex-shrink: 0;
+        }
+        .section-title h2 { font-size: 1.3rem; font-weight: 700; }
+        .section-title .line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+        /* ── Issue cards ── */
+        .issue {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--border);
+            transition: all 0.3s;
+        }
+        .issue:hover { border-color: var(--border-hover); transform: translateX(3px); }
+        .issue.critical { border-left-color: var(--accent-red); }
+        .issue.high { border-left-color: var(--accent-amber); }
+        .issue.medium { border-left-color: var(--accent-blue); }
+        .issue.low { border-left-color: var(--accent-green); }
+
+        .issue-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
+        .issue-severity {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .issue-severity.critical { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .issue-severity.high { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+        .issue-severity.medium { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .issue-severity.low { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+
+        .issue-title { font-weight: 700; font-size: 1rem; }
+        .issue-file {
+            display: inline-block;
+            margin-top: 0.3rem;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            font-family: 'Consolas', monospace;
+            background: rgba(6,182,212,0.06);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+        }
+        .issue-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-top: 0.5rem; }
+        .issue-fix {
+            margin-top: 0.8rem;
+            padding: 0.6rem 1rem;
+            background: rgba(16,185,129,0.06);
+            border: 1px solid rgba(16,185,129,0.15);
+            border-radius: 6px;
+            font-size: 0.82rem;
+            color: var(--accent-green);
+        }
+        .issue-fix strong { color: var(--accent-green); }
+
+        /* ── Security table ── */
+        .sec-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        .sec-table th {
+            background: rgba(239,68,68,0.06);
+            padding: 0.7rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            color: var(--accent-red);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+        .sec-table td {
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .sec-table tr:last-child td { border-bottom: none; }
+        .sec-table tr:hover td { background: rgba(59,130,246,0.02); }
+
+        /* ── Strengths ── */
+        .strength-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent-green);
+            border-radius: 10px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 0.8rem;
+            transition: all 0.3s;
+        }
+        .strength-card:hover { transform: translateX(3px); border-color: var(--accent-green); }
+        .strength-card h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .strength-card p { font-size: 0.83rem; color: var(--text-secondary); }
+
+        /* ── Coverage bars ── */
+        .coverage-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(30,48,80,0.5);
+        }
+        .coverage-item:last-child { border-bottom: none; }
+        .coverage-label { font-size: 0.85rem; min-width: 180px; }
+        .coverage-bar {
+            flex: 1;
+            height: 10px;
+            background: var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .coverage-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        .coverage-pct { font-size: 0.8rem; font-weight: 600; min-width: 40px; text-align: right; }
+
+        /* ── Architecture issues ── */
+        .arch-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.3rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+        }
+        .arch-bullet {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            margin-top: 0.45rem;
+            flex-shrink: 0;
+        }
+        .arch-item p { font-size: 0.88rem; color: var(--text-secondary); }
+        .arch-item code {
+            background: rgba(59,130,246,0.06);
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+            color: var(--accent-cyan);
+        }
+
+        /* ── Summary boxes ── */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .summary-card .num {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        .summary-card .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 0.3rem;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <!-- ── Hero ── -->
+    <div class="hero">
+        <div class="hero-badge">Code Review Report</div>
+        <h1>Neuro Patient Tracker</h1>
+        <p>Comprehensive code quality, security, and architecture assessment</p>
+        <div class="date">Review Date: March 6, 2026 | Reviewer: Claude Code (AI-assisted)</div>
+    </div>
+
+    <!-- ── Quick Summary ── -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="num" style="color:var(--accent-red);">1</div>
+            <div class="label">Critical Issues</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color:var(--accent-amber);">4</div>
+            <div class="label">High Severity</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color:var(--accent-blue);">3</div>
+            <div class="label">Medium Severity</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color:var(--accent-green);">3</div>
+            <div class="label">Low Severity</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color:var(--accent-purple);">~12%</div>
+            <div class="label">Test Coverage</div>
+        </div>
+    </div>
+
+    <!-- ── Overall Score ── -->
+    <div class="score-section">
+        <div class="score-ring">
+            <svg viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="70" class="track" />
+                <circle cx="80" cy="80" r="70" class="fill" style="stroke:var(--accent-amber);" />
+            </svg>
+            <div class="score-text">
+                <div class="score-value">6.5</div>
+                <div class="score-max">/ 10</div>
+            </div>
+        </div>
+        <div class="score-breakdown">
+            <div class="score-item">
+                <div class="score-item-label">Prompt Engineering</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:95%;background:var(--accent-green);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-green);">9.5</div>
+            </div>
+            <div class="score-item">
+                <div class="score-item-label">Architecture</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:75%;background:var(--accent-blue);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-blue);">7.5</div>
+            </div>
+            <div class="score-item">
+                <div class="score-item-label">Code Quality</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-blue);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-blue);">7.0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-item-label">Data Models</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-blue);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-blue);">7.0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-item-label">Security</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:50%;background:var(--accent-amber);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-amber);">5.0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-item-label">Error Handling</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:45%;background:var(--accent-amber);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-amber);">4.5</div>
+            </div>
+            <div class="score-item">
+                <div class="score-item-label">Test Coverage</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:25%;background:var(--accent-red);"></div></div>
+                <div class="score-item-val" style="color:var(--accent-red);">2.5</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Critical & High Issues ── -->
+    <div class="section-title">
+        <div class="icon" style="background:rgba(239,68,68,0.12);color:var(--accent-red);border:1px solid rgba(239,68,68,0.2);">!!</div>
+        <h2>Critical & High Priority Issues</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="issue critical">
+        <div class="issue-header">
+            <span class="issue-severity critical">Critical</span>
+            <span class="issue-title">XSS Vulnerability via Unsanitized LLM Output</span>
+        </div>
+        <div class="issue-file">app.py : lines ~769, ~911</div>
+        <div class="issue-desc">
+            LLM-generated <code>message.content</code> is injected directly into HTML using <code>unsafe_allow_html=True</code>
+            without any sanitization. A manipulated prompt or adversarial LLM output could contain <code>&lt;script&gt;</code> tags
+            or other malicious HTML, enabling cross-site scripting attacks. User-supplied clinical summary text also flows through
+            agents and is rendered unsanitized.
+        </div>
+        <div class="issue-fix">
+            <strong>Fix:</strong> Use <code>html.escape()</code> on all <code>message.content</code> before embedding in HTML strings,
+            or use Streamlit's native <code>st.markdown()</code> without <code>unsafe_allow_html=True</code> for agent output.
+        </div>
+    </div>
+
+    <div class="issue high">
+        <div class="issue-header">
+            <span class="issue-severity high">High</span>
+            <span class="issue-title">Deprecated datetime.utcnow() Used Throughout</span>
+        </div>
+        <div class="issue-file">src/models/schemas.py : lines 74, 75, 126, 144, 164, 196 | src/agents/report_generator.py : line 321</div>
+        <div class="issue-desc">
+            <code>datetime.utcnow()</code> has been deprecated since Python 3.12. It returns a naive datetime with no timezone info,
+            leading to ambiguity in clinical records. The audit logger already uses <code>datetime.now(timezone.utc)</code> correctly,
+            showing inconsistency across the codebase.
+        </div>
+        <div class="issue-fix">
+            <strong>Fix:</strong> Global find-and-replace with <code>datetime.now(timezone.utc)</code>. Critical for clinical records
+            where timestamp precision and unambiguity is legally relevant.
+        </div>
+    </div>
+
+    <div class="issue high">
+        <div class="issue-header">
+            <span class="issue-severity high">High</span>
+            <span class="issue-title">Telemetry Tracks Zero Tokens (Nonfunctional)</span>
+        </div>
+        <div class="issue-file">src/logging/telemetry.py : lines 361-362</div>
+        <div class="issue-desc">
+            The <code>track_llm_call</code> decorator always logs <code>prompt_tokens=0</code> and <code>completion_tokens=0</code>,
+            making the entire cost tracking system nonfunctional. Additionally, it always uses <code>settings.OPENAI_MODEL</code>
+            regardless of whether a local LLM is in use.
+        </div>
+        <div class="issue-fix">
+            <strong>Fix:</strong> Extract actual token usage from AutoGen's response metadata or the OpenAI client's <code>usage</code>
+            response field. Use conditional model name based on provider.
+        </div>
+    </div>
+
+    <div class="issue high">
+        <div class="issue-header">
+            <span class="issue-severity high">High</span>
+            <span class="issue-title">Singleton Pattern Prevents Testing</span>
+        </div>
+        <div class="issue-file">src/logging/audit_logger.py : line 179 | src/logging/telemetry.py : line 111</div>
+        <div class="issue-desc">
+            Both <code>ClinicalAuditLogger</code> and <code>RuntimeTelemetry</code> use <code>__new__</code>-based singletons
+            with no reset mechanism. Tests cannot get clean instances, the <code>_initialized</code> check is not thread-safe,
+            and there is no way to reconfigure logging at runtime.
+        </div>
+        <div class="issue-fix">
+            <strong>Fix:</strong> Add a <code>@classmethod reset()</code> for testing. Use <code>threading.Lock</code> to make
+            initialization thread-safe.
+        </div>
+    </div>
+
+    <div class="issue high">
+        <div class="issue-header">
+            <span class="issue-severity high">High</span>
+            <span class="issue-title">VitalSigns Model Has No Validation Constraints</span>
+        </div>
+        <div class="issue-file">src/models/schemas.py : lines 86-93</div>
+        <div class="issue-desc">
+            Unlike <code>NeurologicalAssessment</code> which has <code>ge</code>/<code>le</code> constraints, <code>VitalSigns</code>
+            accepts any integer/float values. A temperature of -500 or a heart rate of 99999 would pass Pydantic validation.
+            The QA Validator agent has the correct ranges in its prompt but they are not enforced at the data model level.
+        </div>
+        <div class="issue-fix">
+            <strong>Fix:</strong> Add <code>Field(ge=..., le=...)</code> constraints matching clinical ranges. Add a
+            <code>model_validator</code> to enforce <code>systolic > diastolic</code>.
+        </div>
+    </div>
+
+    <!-- ── Medium & Low Issues ── -->
+    <div class="section-title">
+        <div class="icon" style="background:rgba(59,130,246,0.12);color:var(--accent-blue);border:1px solid rgba(59,130,246,0.2);">--</div>
+        <h2>Medium & Low Priority Issues</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="issue medium">
+        <div class="issue-header">
+            <span class="issue-severity medium">Medium</span>
+            <span class="issue-title">PHI Leaked in Log Previews</span>
+        </div>
+        <div class="issue-file">src/logging/audit_logger.py : lines 378-384 | src/orchestrator.py : line 161</div>
+        <div class="issue-desc">
+            Agent content previews log up to 500 chars of potentially unredacted patient data. The orchestrator's
+            <code>task_summary</code> also logs up to 200 chars of the task containing clinical data. While the system
+            has PHI hashing for specific fields, these preview logs bypass that protection.
+        </div>
+    </div>
+
+    <div class="issue medium">
+        <div class="issue-header">
+            <span class="issue-severity medium">Medium</span>
+            <span class="issue-title">No Authentication on Streamlit UI</span>
+        </div>
+        <div class="issue-file">app.py (entire file)</div>
+        <div class="issue-desc">
+            Any user with network access can run analyses on patient data. No authentication, authorization,
+            or session management is implemented. For a HIPAA-compliant clinical system, this is a significant gap.
+        </div>
+    </div>
+
+    <div class="issue medium">
+        <div class="issue-header">
+            <span class="issue-severity medium">Medium</span>
+            <span class="issue-title">No Encryption at Rest for Log Files</span>
+        </div>
+        <div class="issue-file">src/logging/audit_logger.py</div>
+        <div class="issue-desc">
+            Log files containing PHI hashes and clinical content previews are stored as plaintext on disk
+            with no encryption at rest. HIPAA technical safeguards recommend encryption for PHI.
+        </div>
+    </div>
+
+    <div class="issue low">
+        <div class="issue-header">
+            <span class="issue-severity low">Low</span>
+            <span class="issue-title">Dead Code: BaseAgent.create_agent() and BackendDeveloperAgent</span>
+        </div>
+        <div class="issue-file">src/agents/base_agent.py | src/agents/backend_developer.py</div>
+        <div class="issue-desc">
+            <code>BaseAgent.create_agent()</code> and <code>_default_llm_config()</code> are never called -- the orchestrator
+            creates agents directly. <code>BackendDeveloperAgent</code> is imported in <code>__init__.py</code> but never used
+            anywhere. Its <code>generate_crud_template()</code> returns a placeholder string.
+        </div>
+    </div>
+
+    <div class="issue low">
+        <div class="issue-header">
+            <span class="issue-severity low">Low</span>
+            <span class="issue-title">Phantom Dependencies Inflating Install</span>
+        </div>
+        <div class="issue-file">pyproject.toml</div>
+        <div class="issue-desc">
+            FastAPI, uvicorn, SQLAlchemy, and OpenTelemetry packages are listed as required dependencies but have no
+            actual implementation using them. They should be moved to optional dependency groups.
+        </div>
+    </div>
+
+    <div class="issue low">
+        <div class="issue-header">
+            <span class="issue-severity low">Low</span>
+            <span class="issue-title">validate_data_model() is a Stub</span>
+        </div>
+        <div class="issue-file">src/agents/clinical_architect.py : lines 153-158</div>
+        <div class="issue-desc">
+            <code>ClinicalArchitectAgent.validate_data_model()</code> always returns <code>{{"valid": True}}</code>,
+            providing false assurance of data model correctness.
+        </div>
+    </div>
+
+    <!-- ── Security Audit ── -->
+    <div class="section-title">
+        <div class="icon" style="background:rgba(239,68,68,0.12);color:var(--accent-red);border:1px solid rgba(239,68,68,0.2);">SC</div>
+        <h2>Security Audit Summary</h2>
+        <div class="line"></div>
+    </div>
+
+    <table class="sec-table">
+        <thead>
+            <tr><th>Finding</th><th>Severity</th><th>Location</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>XSS via unsanitized LLM output in <code>unsafe_allow_html</code></td><td><span class="issue-severity critical" style="display:inline-block;">Critical</span></td><td>app.py : 769, 911</td></tr>
+            <tr><td>PHI in agent content previews (up to 500 chars unredacted)</td><td><span class="issue-severity high" style="display:inline-block;">High</span></td><td>audit_logger.py : 378-384</td></tr>
+            <tr><td>OpenAI API key handled as plain string, no .gitignore verification</td><td><span class="issue-severity medium" style="display:inline-block;">Medium</span></td><td>settings.py : 20</td></tr>
+            <tr><td>No authentication or authorization on Streamlit UI or CLI</td><td><span class="issue-severity medium" style="display:inline-block;">Medium</span></td><td>app.py</td></tr>
+            <tr><td>PHI in task_summary logs (up to 200 chars of clinical data)</td><td><span class="issue-severity medium" style="display:inline-block;">Medium</span></td><td>orchestrator.py : 161</td></tr>
+            <tr><td>No encryption at rest for log files containing PHI hashes</td><td><span class="issue-severity medium" style="display:inline-block;">Medium</span></td><td>audit_logger.py</td></tr>
+            <tr><td><code>nest_asyncio</code> enables re-entrant loops masking bugs</td><td><span class="issue-severity low" style="display:inline-block;">Low</span></td><td>app.py : 721, 865</td></tr>
+            <tr><td>No rate limiting on LLM calls from UI</td><td><span class="issue-severity low" style="display:inline-block;">Low</span></td><td>app.py</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ── Test Coverage ── -->
+    <div class="section-title">
+        <div class="icon" style="background:rgba(139,92,246,0.12);color:var(--accent-purple);border:1px solid rgba(139,92,246,0.2);">TC</div>
+        <h2>Test Coverage Analysis</h2>
+        <div class="line"></div>
+    </div>
+
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;">
+        <div class="coverage-item">
+            <div class="coverage-label">Pydantic Schemas</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:40%;background:var(--accent-amber);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-amber);">40%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Config Settings</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:30%;background:var(--accent-amber);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-amber);">30%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Agent Helper Methods</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:0%;background:var(--accent-red);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-red);">0%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Audit Logger</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:0%;background:var(--accent-red);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-red);">0%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Telemetry</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:0%;background:var(--accent-red);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-red);">0%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Orchestrator</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:0%;background:var(--accent-red);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-red);">0%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Streamlit UI</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:0%;background:var(--accent-red);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-red);">0%</div>
+        </div>
+        <div class="coverage-item">
+            <div class="coverage-label">Error Paths</div>
+            <div class="coverage-bar"><div class="coverage-fill" style="width:0%;background:var(--accent-red);"></div></div>
+            <div class="coverage-pct" style="color:var(--accent-red);">0%</div>
+        </div>
+    </div>
+
+    <!-- ── Architecture Issues ── -->
+    <div class="section-title">
+        <div class="icon" style="background:rgba(139,92,246,0.12);color:var(--accent-purple);border:1px solid rgba(139,92,246,0.2);">AR</div>
+        <h2>Architecture Assessment</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="arch-item">
+        <div class="arch-bullet"></div>
+        <p><code>BaseAgent.create_agent()</code> is disconnected from actual usage -- the orchestrator never calls it,
+        instead instantiating agents only to extract <code>.system_message</code> then creating <code>AssistantAgent</code> directly.</p>
+    </div>
+    <div class="arch-item">
+        <div class="arch-bullet"></div>
+        <p><code>BackendDeveloperAgent</code> exists and is exported in <code>__init__.py</code> but is never used in the orchestrator
+        or anywhere else. Its <code>generate_crud_template()</code> returns a placeholder string.</p>
+    </div>
+    <div class="arch-item">
+        <div class="arch-bullet"></div>
+        <p>FastAPI, uvicorn, and SQLAlchemy are listed as required dependencies in <code>pyproject.toml</code> but there is
+        no API server, no database models, and no endpoints implemented.</p>
+    </div>
+    <div class="arch-item">
+        <div class="arch-bullet"></div>
+        <p><code>ClinicalArchitectAgent.validate_data_model()</code> always returns <code>{{"valid": True}}</code> -- a stub
+        that provides false assurance of data model correctness without performing any actual validation.</p>
+    </div>
+    <div class="arch-item">
+        <div class="arch-bullet"></div>
+        <p>Model pricing data in <code>telemetry.py</code> is hardcoded and labeled "as of late 2024" -- already outdated.
+        Prices should be externalized or made configurable.</p>
+    </div>
+
+    <!-- ── Strengths ── -->
+    <div class="section-title">
+        <div class="icon" style="background:rgba(16,185,129,0.12);color:var(--accent-green);border:1px solid rgba(16,185,129,0.2);">++</div>
+        <h2>Strengths</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="strength-card">
+        <h4>Outstanding Prompt Engineering (9.5/10)</h4>
+        <p>Each agent has a detailed, structured system prompt with step-by-step reasoning, clinically accurate reference tables,
+        few-shot examples with realistic data, self-review checklists, and explicit safety guardrails. Significantly above average quality.</p>
+    </div>
+    <div class="strength-card">
+        <h4>HIPAA-Aware Logging Architecture (8/10)</h4>
+        <p>PHI hashing via SHA256, separate log streams (audit, PHI access, agent conversations), log rotation with 365-day audit
+        and 7-year PHI retention policies, structured JSON formatting with correlation IDs.</p>
+    </div>
+    <div class="strength-card">
+        <h4>Rich Pydantic Domain Models (7.5/10)</h4>
+        <p>Well-designed clinical data structures: condition-specific assessment fields, medication records with temporal tracking,
+        prognosis analysis with confidence scoring, and proper enum usage for categorical fields.</p>
+    </div>
+    <div class="strength-card">
+        <h4>Clinically Accurate Reference Data (8/10)</h4>
+        <p>Agent helper methods contain accurate clinical data: red flag symptoms, first-line treatments with dosages,
+        assessment score ranges, and condition-specific progression benchmarks.</p>
+    </div>
+    <div class="strength-card">
+        <h4>Clean Project Structure (7.5/10)</h4>
+        <p>Follows Python packaging conventions with proper <code>__init__.py</code> files, clear module boundaries,
+        and a sensible <code>pyproject.toml</code> configuration.</p>
+    </div>
+
+    <!-- ── Footer ── -->
+    <div class="footer">
+        Code Review Report | Neuro Patient Tracker v0.1.0 | March 6, 2026<br>
+        Generated by Claude Code | <a href="architecture.html" style="color:var(--accent-blue);text-decoration:none;">View Architecture</a>
+    </div>
+
+</div>
+
+</body>
+</html>
